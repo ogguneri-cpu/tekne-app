@@ -494,6 +494,33 @@ export default function CreateListingPage() {
                   <h2 className="step-title">{t('Tekne Bilgileri')}</h2>
                   <p className="step-subtitle">{t('Tekneniz hakkında detayları girin')}</p>
                   <div className="form-fields">
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '1.25rem' }}>{t('İlan İletişim Bilgileri')}</h3>
+                    
+                    <div className="form-row" style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                      <div className="form-group" style={{ flex: 1 }}>
+                        <label htmlFor="create-contact-email">{t('E-posta')}</label>
+                        <input 
+                          type="email" 
+                          id="create-contact-email" 
+                          value={contactEmail}
+                          disabled
+                          style={{ background: 'var(--bg-card)', opacity: 0.7, cursor: 'not-allowed' }}
+                        />
+                      </div>
+                      <div className="form-group" style={{ flex: 1 }}>
+                        <label htmlFor="create-contact-phone">{t('Telefon Numarası')}</label>
+                        <input 
+                          type="text" 
+                          id="create-contact-phone" 
+                          value={contactPhone}
+                          onChange={(e) => setContactPhone(e.target.value)}
+                          placeholder="ör: +90 555 123 4567"
+                        />
+                      </div>
+                    </div>
+                    
+                    <hr style={{ margin: '1.5rem 0', borderColor: 'var(--border)', opacity: 0.5 }} />
+
                     <div className="form-group">
                       <label htmlFor="create-title">{t('İlan Başlığı *')}</label>
                       <input 
@@ -768,32 +795,6 @@ export default function CreateListingPage() {
                         />
                         <span>{t('Takas yapılır')}</span>
                       </label>
-                    </div>
-
-                    <hr style={{ margin: '2rem 0', borderColor: 'var(--border)', opacity: 0.5 }} />
-                    <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '1.25rem' }}>{t('İlan İletişim Bilgileri')}</h3>
-                    
-                    <div className="form-row" style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
-                      <div className="form-group" style={{ flex: 1 }}>
-                        <label htmlFor="create-contact-email">{t('E-posta')}</label>
-                        <input 
-                          type="email" 
-                          id="create-contact-email" 
-                          value={contactEmail}
-                          disabled
-                          style={{ background: 'var(--bg-card)', opacity: 0.7, cursor: 'not-allowed' }}
-                        />
-                      </div>
-                      <div className="form-group" style={{ flex: 1 }}>
-                        <label htmlFor="create-contact-phone">{t('Telefon Numarası')}</label>
-                        <input 
-                          type="text" 
-                          id="create-contact-phone" 
-                          value={contactPhone}
-                          onChange={(e) => setContactPhone(e.target.value)}
-                          placeholder="ör: +90 555 123 4567"
-                        />
-                      </div>
                     </div>
                   </div>
                 </>
