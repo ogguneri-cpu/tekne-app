@@ -395,7 +395,7 @@ export default function CreateListingPage() {
                       <textarea 
                         id="create-desc" 
                         rows={6}
-                        placeholder={t('Teknenizin özelliklerini detaylı anlatın...')} 
+                        placeholder={t('Teknenizin özelliklerini detaylı anlatın') + '...'} 
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)', outline: 'none' }}
@@ -861,7 +861,7 @@ export default function CreateListingPage() {
                     onClick={handlePublish}
                     disabled={loading || uploadingImages}
                   >
-                    {loading ? t('Yayınlanıyor...') : t('🚀 Yayınla')}
+                    {loading ? t('Yayınlanıyor') + '...' : t('🚀 Yayınla')}
                   </button>
                 )}
               </div>

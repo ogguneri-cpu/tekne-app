@@ -177,7 +177,7 @@
   "Kategori seçin": "Select category",
   "Teknenizin türünü belirleyin": "Specify your boat type",
   "ör: Azimut 50 Fly — Tam Donanımlı": "e.g. Azimut 50 Fly — Fully Equipped",
-  "Teknenizin özelliklerini detaylı anlatın...": "Describe your boat features in detail...",
+  "Teknenizin özelliklerini detaylı anlatın": "Describe your boat features in detail",
   "Model": "Model",
   "Seçin": "Select",
   "Gövde Tipi": "Hull Type",
@@ -213,5 +213,5 @@
   "En": "Beam",
   "Kamara": "Cabin",
   "Geri": "Back",
-  "Yayınlanıyor...": "Publishing..."
+  "Yayınlanıyor": "Publishing"
 }
