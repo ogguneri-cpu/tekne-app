@@ -200,12 +200,11 @@ export default function RichTextEditor({ value, onChange, placeholder = 'Açıkl
         
       </div>
 
-      {/* EDITABLE CONTENT AREA */}
       <div
         ref={editorRef}
         contentEditable
         onInput={handleInput}
-        placeholder={placeholder}
+        data-placeholder={placeholder}
         style={{
           flex: 1,
           padding: '12px 16px',
@@ -223,7 +222,7 @@ export default function RichTextEditor({ value, onChange, placeholder = 'Açıkl
 
       <style jsx global>{`
         .rich-text-editor-content:empty::before {
-          content: attr(placeholder);
+          content: attr(data-placeholder);
           color: var(--text-muted);
           opacity: 0.65;
           pointer-events: none;
