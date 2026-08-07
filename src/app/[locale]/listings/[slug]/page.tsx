@@ -367,6 +367,9 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
       </>
     );
   } catch (e: any) {
+    if (e.message === 'NEXT_NOT_FOUND' || e.digest === 'NEXT_NOT_FOUND') {
+      throw e;
+    }
     return (
       <div style={{ padding: '3rem 2rem', background: '#fff', color: '#000', fontFamily: 'monospace', maxWidth: '800px', margin: '3rem auto', borderRadius: '12px', border: '1px solid #ccc' }}>
         <h1 style={{ color: 'red', fontSize: '1.5rem', marginBottom: '1rem' }}>Server Rendering Error (500)</h1>
