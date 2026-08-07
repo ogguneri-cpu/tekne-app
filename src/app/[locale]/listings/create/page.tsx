@@ -180,6 +180,8 @@ export default function CreateListingPage() {
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [uploadingImages, setUploadingImages] = useState(false);
+  const [contactEmail, setContactEmail] = useState('');
+  const [contactPhone, setContactPhone] = useState('');
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
   const handleDragStart = (e: React.DragEvent, index: number) => {
@@ -217,10 +219,13 @@ export default function CreateListingPage() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) {
-        alert('İlan oluşturmak için giriş yapmalısınız') + '.';
+        alert(t('İlan oluşturmak için giriş yapmalısınız') + '.');
         router.push('/auth/login');
       } else {
-        setUser(session.user);
+        const u = session.user;
+        setUser(u);
+        setContactEmail(u.email || '');
+        setContactPhone(u.phone || u.user_metadata?.phone || '');
       }
     });
   }, [supabase, router]);
@@ -373,8 +378,8 @@ export default function CreateListingPage() {
         images: uploadedUrls,
         thumbnail: uploadedUrls[0] || null,
         user_name: user.user_metadata?.full_name || 'Kullanıcı',
-        user_phone: user.user_metadata?.phone || '',
-        user_email: user.email || ''
+        user_phone: contactPhone,
+        user_email: contactEmail
       };
 
       const { error } = await supabase
@@ -763,6 +768,32 @@ export default function CreateListingPage() {
                         />
                         <span>{t('Takas yapılır')}</span>
                       </label>
+                    </div>
+
+                    <hr style={{ margin: '2rem 0', borderColor: 'var(--border)', opacity: 0.5 }} />
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '1.25rem' }}>{t('İlan İletişim Bilgileri')}</h3>
+                    
+                    <div className="form-row" style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                      <div className="form-group" style={{ flex: 1 }}>
+                        <label htmlFor="create-contact-email">{t('E-posta')}</label>
+                        <input 
+                          type="email" 
+                          id="create-contact-email" 
+                          value={contactEmail}
+                          disabled
+                          style={{ background: 'var(--bg-card)', opacity: 0.7, cursor: 'not-allowed' }}
+                        />
+                      </div>
+                      <div className="form-group" style={{ flex: 1 }}>
+                        <label htmlFor="create-contact-phone">{t('Telefon Numarası')}</label>
+                        <input 
+                          type="text" 
+                          id="create-contact-phone" 
+                          value={contactPhone}
+                          onChange={(e) => setContactPhone(e.target.value)}
+                          placeholder="ör: +90 555 123 4567"
+                        />
+                      </div>
                     </div>
                   </div>
                 </>
