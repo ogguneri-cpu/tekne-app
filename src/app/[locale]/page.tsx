@@ -43,6 +43,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+  const [blogs, setBlogs] = useState<any[]>([]);
 
   // 1. Fetch Listings from Database on Mount
   useEffect(() => {
@@ -98,6 +99,23 @@ export default function HomePage() {
     };
 
     fetchListings();
+  }, [supabase]);
+
+  // Fetch blogs from database
+  useEffect(() => {
+    const fetchBlogs = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('blog_posts')
+          .select('*')
+          .order('created_at', { ascending: false });
+        if (error) throw error;
+        if (data) setBlogs(data);
+      } catch (err) {
+        console.error('Error fetching blogs:', err);
+      }
+    };
+    fetchBlogs();
   }, [supabase]);
 
   // 2. Perform Filtering logic locally
@@ -334,21 +352,29 @@ export default function HomePage() {
               </p>
             </div>
             <div className="blog-grid">
-              {Object.values(BLOG_POSTS).map((post) => {
+              {blogs.map((post) => {
                 const title = locale === 'en' && post.title_en ? post.title_en : post.title;
                 const excerpt = post.content.replace(/<[^>]*>/g, '').substring(0, 180).trim() + '...';
+                const displayTag = locale === 'en' ? (post.tag_en || post.tag) : post.tag;
+                
+                // Format date
+                const dateObj = new Date(post.created_at || post.date || new Date());
+                const dateFormatted = dateObj.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+                const dateFormattedEn = dateObj.toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
+                const dateStr = locale === 'en' ? dateFormattedEn : dateFormatted;
+
                 return (
                   <Link 
                     key={post.id}
-                    href={`/blog/${post.id}`} 
+                    href={`/blog/${post.slug}`} 
                     className="blog-card"
                   >
                     <div className="blog-card-image">
-                      <img src={post.image} alt={post.alt} loading="lazy" />
-                      <span className="blog-tag">{t(post.tag)}</span>
+                      <img src={post.image} alt={title} loading="lazy" />
+                      {displayTag && <span className="blog-tag">{displayTag}</span>}
                     </div>
                     <div className="blog-card-body">
-                      <time className="blog-date">{locale === 'en' ? post.dateFormattedEn : post.dateFormatted}</time>
+                      <time className="blog-date">{dateStr}</time>
                       <h3 className="blog-title">{title}</h3>
                       <p className="blog-excerpt">{excerpt}</p>
                       <span className="blog-read-more">{t('Devamını Oku →')}</span>

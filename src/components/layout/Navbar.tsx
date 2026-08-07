@@ -112,49 +112,56 @@ export default function Navbar() {
             {theme === 'dark' ? '☀️' : '🌙'}
           </button>
 
-          <div className="nav-user-dropdown" style={{ position: 'relative' }}>
+          <div 
+            className={`nav-user-dropdown ${user ? 'is-logged-in' : ''}`}
+            style={{ position: 'relative' }}
+            onMouseEnter={() => user && setDropdownOpen(true)}
+            onMouseLeave={() => user && setDropdownOpen(false)}
+          >
             <button 
               className="btn-auth" 
-              onClick={() => user ? setDropdownOpen(!dropdownOpen) : router.push('/auth/login')}
+              onClick={() => user ? router.push('/profile') : router.push('/auth/login')}
             >
               <UserIcon size={20} />
               <span>{user ? (user.user_metadata?.full_name || user.email?.split('@')[0]) : t('Giriş Yap')}</span>
             </button>
 
             {user && dropdownOpen && (
-              <>
-                <div 
-                  style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 10 }}
+              <div className="user-menu-dropdown show" style={{ zIndex: 99 }}>
+                <Link 
+                  href="/profile" 
+                  className="user-menu-item"
                   onClick={() => setDropdownOpen(false)}
-                />
-                <div className="user-menu-dropdown show">
-                  <Link 
-                    href="/profile" 
-                    className="user-menu-item"
-                    onClick={() => setDropdownOpen(false)}
-                  >
-                    <span>📋</span>
-                    <span>{t('İlanlarım')}</span>
-                  </Link>
-                  <Link 
-                    href="/listings/create" 
-                    className="user-menu-item"
-                    onClick={() => setDropdownOpen(false)}
-                  >
-                    <span>➕</span>
-                    <span>{t('İlan Ver')}</span>
-                  </Link>
-                  <div className="user-menu-divider" />
-                  <button 
-                    onClick={handleLogout} 
-                    className="user-menu-item danger"
-                    style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none' }}
-                  >
-                    <span>🚪</span>
-                    <span>{t('Çıkış Yap')}</span>
-                  </button>
-                </div>
-              </>
+                >
+                  <span>📋</span>
+                  <span>{t('İlanlarım')}</span>
+                </Link>
+                <Link 
+                  href="/profile?tab=settings" 
+                  className="user-menu-item"
+                  onClick={() => setDropdownOpen(false)}
+                >
+                  <span>⚙️</span>
+                  <span>{t('Profil Ayarları')}</span>
+                </Link>
+                <Link 
+                  href="/listings/create" 
+                  className="user-menu-item"
+                  onClick={() => setDropdownOpen(false)}
+                >
+                  <span>➕</span>
+                  <span>{t('İlan Ver')}</span>
+                </Link>
+                <div className="user-menu-divider" />
+                <button 
+                  onClick={handleLogout} 
+                  className="user-menu-item danger"
+                  style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none' }}
+                >
+                  <span>🚪</span>
+                  <span>{t('Çıkış Yap')}</span>
+                </button>
+              </div>
             )}
           </div>
         </div>

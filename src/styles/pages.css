@@ -58,7 +58,7 @@
 .sahib-main-img-wrap {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 4 / 3;
   max-height: 420px;
   border-radius: 12px;
   overflow: hidden;
@@ -69,7 +69,7 @@
 .sahib-main-img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   display: block;
   transition: opacity 0.3s ease;
 }
@@ -618,7 +618,7 @@
   }
 
   .sahib-main-img-wrap {
-    aspect-ratio: 16 / 10;
+    aspect-ratio: 4 / 3;
   }
 
   .sahib-title {

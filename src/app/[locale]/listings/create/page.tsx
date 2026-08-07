@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { User } from '@supabase/supabase-js';
+import RichTextEditor from '@/components/common/RichTextEditor';
 
 const STEP_LABELS = ['Tip', 'Kategori', 'Bilgiler', 'Fiyat', 'Konum', 'Fotoğraflar', 'Özellikler', 'Önizleme'];
 
@@ -156,6 +157,7 @@ export default function CreateListingPage() {
   const [bodyMaterial, setBodyMaterial] = useState('');
   const [engineCount, setEngineCount] = useState('');
   const [enginePower, setEnginePower] = useState('');
+  const [engineBrand, setEngineBrand] = useState('');
   const [fuelType, setFuelType] = useState('');
   const [engineHours, setEngineHours] = useState('');
   const [flag, setFlag] = useState('Türkiye');
@@ -180,6 +182,7 @@ export default function CreateListingPage() {
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [uploadingImages, setUploadingImages] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [contactEmail, setContactEmail] = useState('');
   const [contactPhone, setContactPhone] = useState('');
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
@@ -356,8 +359,8 @@ export default function CreateListingPage() {
         brand,
         model: model || null,
         type,
-        sale_price: type === 'sale' ? Number(price) : null,
-        rent_price_daily: type === 'rent' ? Number(price) : null,
+        sale_price: type === 'sale' && price ? Number(price.replace(/\./g, '')) : null,
+        rent_price_daily: type === 'rent' && price ? Number(price.replace(/\./g, '')) : null,
         currency,
         city,
         district: district || null,
@@ -368,6 +371,7 @@ export default function CreateListingPage() {
         cabin_count: cabinCount ? Number(cabinCount) : null,
         engine_count: engineCount ? Number(engineCount) : null,
         engine_power_hp: enginePower ? Number(enginePower) : null,
+        engine_brand: engineBrand || null,
         fuel_type: fuelType || null,
         engine_hours: engineHours ? Number(engineHours) : null,
         flag: flag || 'Türkiye',
@@ -388,8 +392,24 @@ export default function CreateListingPage() {
 
       if (error) throw error;
 
-      alert('İlanınız başarıyla değerlendirmeye alındı Onaylandıktan sonra yayına alınacaktır') + '.';
-      router.push('/');
+      // Trigger email notification asynchronously
+      const cleanPrice = price ? Number(price.replace(/\./g, '')) : 0;
+      fetch('/api/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          category,
+          brand,
+          price: cleanPrice,
+          currency,
+          city,
+          district,
+          type
+        })
+      }).catch(err => console.error('Failed to send notification email:', err));
+
+      setShowSuccessModal(true);
     } catch (err: any) {
       setErrorMsg(err.message || 'İlan kaydedilirken bir hata oluştu.');
     } finally {
@@ -535,13 +555,10 @@ export default function CreateListingPage() {
                     
                     <div className="form-group">
                       <label>{t('Açıklama')}</label>
-                      <textarea 
-                        id="create-desc" 
-                        rows={6}
-                        placeholder={t('Teknenizin özelliklerini detaylı anlatın') + '...'} 
+                      <RichTextEditor
                         value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                        style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)', outline: 'none' }}
+                        onChange={setDescription}
+                        placeholder={t('Teknenizin özelliklerini detaylı anlatın') + '...'}
                       />
                     </div>
 
@@ -699,6 +716,19 @@ export default function CreateListingPage() {
 
                     <div className="form-row" style={{ display: 'flex', gap: '1rem' }}>
                       <div className="form-group" style={{ flex: 1 }}>
+                        <label htmlFor="create-engine-brand">{t('Motor Markası')}</label>
+                        <input 
+                          type="text" 
+                          id="create-engine-brand" 
+                          placeholder="ör: Yanmar, Volvo Penta" 
+                          value={engineBrand}
+                          onChange={(e) => setEngineBrand(e.target.value)}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="form-row" style={{ display: 'flex', gap: '1rem' }}>
+                      <div className="form-group" style={{ flex: 1 }}>
                         <label htmlFor="create-hours">{t('Çalışma Saati')}</label>
                         <input 
                           type="number" 
@@ -808,11 +838,14 @@ export default function CreateListingPage() {
                   <div className="price-input-group">
                     <div className="price-input-row" style={{ display: 'flex', gap: '1rem' }}>
                       <input 
-                        type="number" 
+                        type="text" 
                         id="create-price" 
                         placeholder={t('Fiyat')} 
                         value={price}
-                        onChange={(e) => setPrice(e.target.value)}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/\D/g, '');
+                          setPrice(val ? new Intl.NumberFormat('tr-TR').format(parseInt(val, 10)) : '');
+                        }}
                         style={{ flex: 1, padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '1rem', outline: 'none' }}
                       />
                       <select 
@@ -1007,7 +1040,7 @@ export default function CreateListingPage() {
                       </span>
                       <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: '4px 0 0' }}>{title || t('Başlıksız')}</h3>
                       <p style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--primary)', margin: '8px 0 0' }}>
-                        {price ? `${Number(price).toLocaleString('tr-TR')} ${currency === 'TRY' ? 'TL' : currency}` : t('Fiyat Belirtilmemiş')}
+                        {price ? `${Number(price.replace(/\./g, '')).toLocaleString('tr-TR')} ${currency === 'TRY' ? 'TL' : currency}` : t('Fiyat Belirtilmemiş')}
                       </p>
                     </div>
 
@@ -1074,6 +1107,76 @@ export default function CreateListingPage() {
           </div>
         </div>
       </main>
+
+      {showSuccessModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.75)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: '1rem'
+        }}>
+          <div style={{
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border)',
+            borderRadius: '20px',
+            padding: '2.5rem 2rem',
+            maxWidth: '450px',
+            width: '100%',
+            textAlign: 'center',
+            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3)'
+          }}>
+            <div style={{
+              width: '70px',
+              height: '70px',
+              borderRadius: '50%',
+              background: 'rgba(46, 204, 113, 0.1)',
+              color: '#2ecc71',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 1.5rem',
+              fontSize: '2.5rem',
+              fontWeight: 'bold'
+            }}>
+              ✓
+            </div>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.75rem' }}>
+              İlanınız Değerlendirmede!
+            </h2>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: '1.6', marginBottom: '2rem' }}>
+              Tekne ilanınız başarıyla kaydedilmiştir. Yöneticilerimiz tarafından onaylandıktan sonra yayına alınacaktır.
+            </p>
+            <button
+              onClick={() => {
+                setShowSuccessModal(false);
+                router.push('/');
+              }}
+              style={{
+                width: '100%',
+                padding: '12px',
+                background: 'var(--color-primary)',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '8px',
+                fontWeight: 600,
+                fontSize: '1rem',
+                cursor: 'pointer',
+                transition: 'opacity 0.2s'
+              }}
+            >
+              Ana Sayfaya Git
+            </button>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </>

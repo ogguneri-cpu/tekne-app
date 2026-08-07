@@ -59,13 +59,34 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
   // 1. Fetch from Database
   let listing: any = null;
   try {
-    const { data } = await supabase
-      .from('listings')
-      .select('*')
-      .or(`slug.eq.${slug},id.eq.${slug}`)
-      .single();
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(slug);
+    let query = supabase.from('listings').select('*');
+    if (isUuid) {
+      query = query.or(`slug.eq.${slug},id.eq.${slug}`);
+    } else {
+      query = query.eq('slug', slug);
+    }
+    
+    const { data, error } = await query.maybeSingle();
+    if (error) {
+      console.warn('DB query error:', error.message);
+    }
 
     if (data) {
+      let profile = { full_name: '', phone: '' };
+      try {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('full_name, phone')
+          .eq('id', data.user_id)
+          .maybeSingle();
+        if (profileData) {
+          profile = profileData;
+        }
+      } catch (profileErr) {
+        console.warn('Profile fetch error:', profileErr);
+      }
+
       listing = {
         id: data.id,
         user_id: data.user_id,
@@ -91,6 +112,7 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
         cabin_count: data.cabin_count,
         engine_count: data.engine_count,
         engine_power: data.engine_power_hp,
+        engine_brand: data.engine_brand,
         fuel_type: data.fuel_type,
         engine_hours: data.engine_hours,
         flag: data.flag,
@@ -99,9 +121,9 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
         is_swap: data.is_swap,
         features: data.features || {},
         images: data.images || [],
-        user_name: data.user_name || 'Kullanıcı',
-        user_phone: data.user_phone,
-        user_email: data.user_email
+        user_name: data.user_name || profile.full_name || 'Kullanıcı',
+        user_phone: data.user_phone || profile.phone || '',
+        user_email: data.user_email || ''
       };
     }
   } catch (e) {
@@ -275,6 +297,7 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
                 <SpecRow label={t('Gövde Malzemesi')} value={listing.hull_material} />
                 <SpecRow label={t('Kamara Sayısı')} value={listing.cabin_count} />
                 <SpecRow label={t('Motor Gücü')} value={listing.engine_power ? `${listing.engine_power} HP` : null} />
+                <SpecRow label={t('Motor Markası')} value={listing.engine_brand} />
                 <SpecRow label={t('Çalışma Saati')} value={listing.engine_hours ? listing.engine_hours.toLocaleString('tr-TR') : null} />
                 <SpecRow label={t('Bandıra')} value={listing.flag} />
                 <SpecRow label={t('Durumu')} value={listing.condition === 'sifir' ? t('Sıfır') : t('İkinci El')} />
