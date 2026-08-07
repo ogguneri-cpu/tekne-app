@@ -857,7 +857,7 @@ export default function CreateListingPage() {
                       <rect x="7" y="5" width="2" height="1" fill="#ffcc00" />
                     </svg>
                     <div className="upload-area-text">{t('Fotoğraf yüklemek için tıklayın veya sürükleyin')}</div>
-                    <div className="upload-area-sub">{t('JPG, PNG — Maks. 5MB/adet · Otomatik optimize edilir')}</div>
+                    <div className="upload-area-sub">{t('JPG, PNG — Maks 5MB/adet · Otomatik optimize edilir')}</div>
                   </div>
                   
                   {imagePreviews.length > 0 && (
@@ -959,7 +959,16 @@ export default function CreateListingPage() {
                   <h2 className="step-title">{t('Önizleme')}</h2>
                   <p className="step-subtitle">{t('İlanınızı kontrol edin ve yayınlayın')}</p>
                   
-                  <div className="preview-container" style={{ padding: '1rem', background: 'var(--bg-body)', borderRadius: '16px', border: '1px solid var(--border)', marginBottom: '2rem' }}>
+                  <div className="preview-container" style={{ padding: '1.5rem', background: 'var(--bg-body)', borderRadius: '16px', border: '1px solid var(--border)', marginBottom: '2rem' }}>
+                    {imagePreviews.length > 0 && (
+                      <div style={{ width: '100%', height: '280px', borderRadius: '12px', overflow: 'hidden', marginBottom: '1.25rem', border: '1px solid var(--border)' }}>
+                        <img 
+                          src={imagePreviews[0]} 
+                          alt="Kapak Görseli" 
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                        />
+                      </div>
+                    )}
                     <div style={{ marginBottom: '1rem' }}>
                       <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>
                         {type === 'sale' ? t('Satılık') : t('Kiralık')} · {t(category)}
