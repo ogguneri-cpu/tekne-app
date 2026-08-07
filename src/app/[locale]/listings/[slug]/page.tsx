@@ -182,22 +182,82 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
               <div className="sahib-price-card">
                 <div className="sahib-price-label">{priceLabel}</div>
                 <div className="sahib-price-val">{priceText}</div>
+              </div>
 
-                <hr style={{ margin: '1rem 0', borderColor: 'var(--border)', opacity: 0.5 }} />
+              {/* Booking section for rental */}
+              {listing.type === 'rent' && (
+                <div className="sahib-booking" style={{ marginTop: '1rem' }}>
+                  <BookingForm pricePerDay={listing.price_per_day || 0} currency={listing.currency} />
+                </div>
+              )}
 
-                <BookingForm 
-                  listingId={listing.id}
-                  listingType={listing.type}
-                  salePrice={listing.sale_price}
-                  dailyPrice={listing.price_per_day}
-                  currency={listing.currency}
-                  userPhone={listing.user_phone}
-                  userName={userName}
-                />
+              {/* Contact & Seller info */}
+              <div className="sahib-contact-card" style={{ marginTop: '1rem', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1.25rem' }}>
+                <div className="sahib-seller-card" style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '1rem' }}>
+                  <div className="sahib-seller-logo" style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(0, 102, 255, 0.1)', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '1.2rem' }}>
+                    👤
+                  </div>
+                  <div className="sahib-seller-info" style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span className="sahib-seller-name" style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{userName}</span>
+                    <span className="sahib-seller-loc" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                      {[listing.location_ilce, listing.location_il].filter(Boolean).join(', ') || t('Belirtilmemiş')}
+                    </span>
+                  </div>
+                </div>
+
+                {listing.user_phone && (
+                  <a 
+                    href={`tel:${String(listing.user_phone).replace(/\s|\(|\)/g, '')}`} 
+                    className="sahib-phone-btn"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      width: '100%',
+                      padding: '12px',
+                      background: 'var(--color-primary)',
+                      color: '#fff',
+                      borderRadius: '10px',
+                      textDecoration: 'none',
+                      fontWeight: 700,
+                      fontSize: '0.9rem',
+                      marginBottom: '8px',
+                      textAlign: 'center'
+                    }}
+                  >
+                    📞 Cep: {listing.user_phone}
+                  </a>
+                )}
+
+                {listing.user_email && (
+                  <a 
+                    href={`mailto:${listing.user_email}`} 
+                    className="sahib-phone-btn"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      width: '100%',
+                      padding: '12px',
+                      border: '1px solid var(--border)',
+                      background: 'var(--bg-card)',
+                      color: 'var(--text-primary)',
+                      borderRadius: '10px',
+                      textDecoration: 'none',
+                      fontWeight: 700,
+                      fontSize: '0.9rem',
+                      textAlign: 'center'
+                    }}
+                  >
+                    ✉️ {t('E-posta Gönder')}
+                  </a>
+                )}
               </div>
 
               {/* Quick Specs (right desktop sidebar) */}
-              <div className="sahib-quick-specs">
+              <div className="sahib-quick-specs" style={{ marginTop: '1rem' }}>
                 <div className="sahib-qs-item">
                   <span className="sahib-qs-label">{t('İlan No')}</span>
                   <span className="sahib-qs-value">{String(listing.id).substring(0, 10)}</span>
