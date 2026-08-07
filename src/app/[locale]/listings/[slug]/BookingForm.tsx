@@ -24,7 +24,7 @@ export default function BookingForm({ pricePerDay, currency }: BookingFormProps)
     const diffTime = end.getTime() - start.getTime();
     
     if (diffTime <= 0) {
-      alert('Çıkış tarihi giriş tarihinden sonra olmalıdır.');
+      alert('Çıkış tarihi giriş tarihinden sonra olmalıdır') + '.';
       return;
     }
 

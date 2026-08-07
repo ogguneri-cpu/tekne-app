@@ -30,15 +30,15 @@ const POPULAR_BRANDS = [
 const FEATURES_SCHEMA = {
   kamara: {
     label: 'Kamara',
-    items: ['Banyo & WC', 'Personel Kabini', 'Salon', 'Yatak Odası']
+    items: ['Banyo & WC', 'Personal Kabini', 'Salon', 'Yatak Odası']
   },
   mutfak: {
     label: 'Mutfak',
-    items: ['Buzdolabı', 'Buz Yapıcı', 'Derin Dondurucu', 'Fırın & Mikrodalga', 'Ocak', 'Su Isıtıcı']
+    items: ['Aspiratör', 'Bulaşık Makinesi', 'Buzdolabı', 'Buz Yapıcı', 'Çamaşır Makinesi', 'Çay Makinesi', 'Derin Dondurucu', 'Fırın & Mikrodalga', 'Kahve Makinesi', 'Ocak', 'Su Isıtıcı']
   },
   guverte: {
     label: 'Güverte Ekipmanları',
-    items: ['Can Yeleği', 'Çapa', 'Direk & Yelken', 'Elektrikli Irgat', 'Otopilot', 'Pasarella', 'Zincir']
+    items: ['Balık Tutma Malzemeleri', 'Bimini', 'Can Salı', 'Can Simidi', 'Can Yeleği', 'Çapa', 'Dalış Ekipmanları', 'Deniz Merdiveni', 'Direk & Yelken', 'Elektrikli Irgat', 'Güneş Yatakları', 'Matafora', 'Otopilot', 'Palamar', 'Pasarella', 'Şişme Bot', 'Yangın Söndürme Tertibatı', 'Zincir']
   },
   tanklar: {
     label: 'Tanklar',
@@ -46,11 +46,11 @@ const FEATURES_SCHEMA = {
   },
   elektronik: {
     label: 'Elektronik',
-    items: ['GPS', 'Pusula', 'Radar', 'Telsiz', 'TV & Uydu']
+    items: ['Alarm', 'CD / DVD Çalar', 'Chart Plotter', 'Derinlik Ölçer', 'GPS', 'Hız Göstergesi', 'Müzik Sistemi', 'Projektör', 'Pusula', 'Radar', 'Telsiz', 'TV & Uydu']
   },
   elektrik: {
     label: 'Elektrik Donanımı',
-    items: ['Akü', 'Güneş Paneli', 'Inverter', 'Jeneratör', 'Klima', 'Sintine Pompası']
+    items: ['AC / DC', 'Akü', 'Güneş Paneli', 'Hidrofor', 'Inverter', 'Jeneratör', 'Klima', 'Sintine Pompası']
   }
 };
 
@@ -70,9 +70,70 @@ const SpecRow = ({ label, value }: { label: string; value: any }) => {
   );
 };
 
+const compressImage = (file: File): Promise<Blob> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        const MAX_WIDTH = 1600;
+        const MAX_HEIGHT = 1600;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height = Math.round((height * MAX_WIDTH) / width);
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width = Math.round((width * MAX_HEIGHT) / height);
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(file);
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0, width, height);
+
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              resolve(blob);
+            } else {
+              resolve(file);
+            }
+          },
+          'image/jpeg',
+          0.75
+        );
+      };
+      img.onerror = (err) => reject(err);
+    };
+    reader.onerror = (err) => reject(err);
+  });
+};
+
 export default function CreateListingPage() {
   const t = useTranslations();
   const router = useRouter();
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleUploadAreaClick = () => {
+    fileInputRef.current?.click();
+  };
   const supabase = createClient();
 
   const [user, setUser] = useState<User | null>(null);
@@ -119,11 +180,44 @@ export default function CreateListingPage() {
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [uploadingImages, setUploadingImages] = useState(false);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent, targetIndex: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === targetIndex) return;
+
+    const updatedImages = [...images];
+    const draggedImage = updatedImages[draggedIndex];
+    updatedImages.splice(draggedIndex, 1);
+    updatedImages.splice(targetIndex, 0, draggedImage);
+    setImages(updatedImages);
+
+    const updatedPreviews = [...imagePreviews];
+    const draggedPreview = updatedPreviews[draggedIndex];
+    updatedPreviews.splice(draggedIndex, 1);
+    updatedPreviews.splice(targetIndex, 0, draggedPreview);
+    setImagePreviews(updatedPreviews);
+
+    setDraggedIndex(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+  };
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) {
-        alert('İlan oluşturmak için giriş yapmalısınız.');
+        alert('İlan oluşturmak için giriş yapmalısınız') + '.';
         router.push('/auth/login');
       } else {
         setUser(session.user);
@@ -134,27 +228,29 @@ export default function CreateListingPage() {
   const handleNext = () => {
     if (currentStep === 1 && !type) return;
     if (currentStep === 2 && !category) {
-      alert('Lütfen bir kategori seçin.');
+      alert(t('Lütfen bir kategori seçin') + '.');
       return;
     }
     if (currentStep === 3 && (!title.trim() || title.length < 5)) {
-      alert('Lütfen geçerli bir başlık girin (en az 5 karakter).');
+      alert(t('Lütfen geçerli bir başlık girin (en az 5 karakter)') + '.');
       return;
     }
     if (currentStep === 4 && !price) {
-      alert('Lütfen fiyat girin.');
+      alert(t('Lütfen fiyat girin') + '.');
       return;
     }
     if (currentStep === 5 && !city) {
-      alert('Lütfen bir il seçin.');
+      alert(t('Lütfen bir il seçin') + '.');
       return;
     }
     
     setCurrentStep(prev => prev + 1);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handlePrev = () => {
     setCurrentStep(prev => prev - 1);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleFeatureToggle = (catKey: string, item: string) => {
@@ -169,24 +265,39 @@ export default function CreateListingPage() {
     });
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
     const files = Array.from(e.target.files);
     
-    if (images.length + files.length > 10) {
-      alert('En fazla 10 fotoğraf yükleyebilirsiniz.');
+    if (images.length + files.length > 20) {
+      alert(t('En fazla 20 fotoğraf yükleyebilirsiniz') + '.');
       return;
     }
 
-    setImages([...images, ...files]);
-    
-    files.forEach(file => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreviews(prev => [...prev, reader.result as string]);
-      };
-      reader.readAsDataURL(file);
-    });
+    setLoading(true);
+    try {
+      const compressedFiles = await Promise.all(
+        files.map(async (file) => {
+          try {
+            const compressedBlob = await compressImage(file);
+            const newName = file.name.replace(/\.[^/.]+$/, "") + ".jpg";
+            return new File([compressedBlob], newName, { type: 'image/jpeg' });
+          } catch (err) {
+            console.error('Compression failed for', file.name, err);
+            return file;
+          }
+        })
+      );
+
+      setImages([...images, ...compressedFiles]);
+      
+      const newPreviews = compressedFiles.map(file => URL.createObjectURL(file));
+      setImagePreviews([...imagePreviews, ...newPreviews]);
+    } catch (err) {
+      console.error('Error in file upload processing:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleRemoveImage = (index: number) => {
@@ -272,7 +383,7 @@ export default function CreateListingPage() {
 
       if (error) throw error;
 
-      alert('İlanınız başarıyla değerlendirmeye alındı! Onaylandıktan sonra yayına alınacaktır.');
+      alert('İlanınız başarıyla değerlendirmeye alındı Onaylandıktan sonra yayına alınacaktır') + '.';
       router.push('/');
     } catch (err: any) {
       setErrorMsg(err.message || 'İlan kaydedilirken bir hata oluştu.');
@@ -725,26 +836,77 @@ export default function CreateListingPage() {
               {/* Step 6: Fotoğraflar */}
               {currentStep === 6 && (
                 <>
-                  <h2 className="step-title">{t('Fotoğraf Yükleyin')}</h2>
-                  <p className="step-subtitle">{t('Teknenizin güncel fotoğraflarını ekleyin (en fazla 10 adet)')}</p>
-                  <div className="photo-upload-area" id="photo-drop-zone" style={{ position: 'relative' }}>
-                    <span className="upload-icon">📷</span>
-                    <p>{t('Fotoğrafları sürükleyip bırakın veya seçin')}</p>
+                  <h2 className="step-title">{t('Fotoğraflar')}</h2>
+                  <p className="step-subtitle">
+                    {t('Teknenizin fotoğraflarını yükleyin (en fazla 20 adet) — Sürükleyerek sıralayın, ilk fotoğraf kapak görseli olur')}
+                  </p>
+                  
+                  <div className="upload-area" style={{ border: '2px dashed #0066ff' }} onClick={handleUploadAreaClick}>
                     <input 
                       type="file" 
-                      id="photo-file-input" 
+                      ref={fileInputRef}
                       multiple 
                       accept="image/*" 
-                      style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }}
+                      style={{ display: 'none' }}
                       onChange={handleFileChange}
                     />
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="#1a1a1a" style={{ margin: '0 auto 1.5rem', display: 'block' }}>
+                      <path d="M4 4h3l2-3h6l2 3h3a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H4a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3z" />
+                      <circle cx="12" cy="13" r="4" fill="#fff" />
+                      <circle cx="12" cy="13" r="2.5" fill="#1a1a1a" />
+                      <rect x="7" y="5" width="2" height="1" fill="#ffcc00" />
+                    </svg>
+                    <div className="upload-area-text">{t('Fotoğraf yüklemek için tıklayın veya sürükleyin')}</div>
+                    <div className="upload-area-sub">{t('JPG, PNG — Maks. 5MB/adet · Otomatik optimize edilir')}</div>
                   </div>
                   
                   {imagePreviews.length > 0 && (
                     <div className="photo-previews" id="photo-previews" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px', marginTop: '1.5rem' }}>
                       {imagePreviews.map((preview, i) => (
-                        <div key={i} style={{ position: 'relative', aspectRatio: '4/3', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border)' }}>
+                        <div 
+                          key={i} 
+                          draggable
+                          onDragStart={(e) => handleDragStart(e, i)}
+                          onDragOver={(e) => handleDragOver(e, i)}
+                          onDragEnd={handleDragEnd}
+                          onDrop={(e) => handleDrop(e, i)}
+                          style={{ 
+                            position: 'relative', 
+                            aspectRatio: '4/3', 
+                            borderRadius: '8px', 
+                            overflow: 'hidden', 
+                            border: i === 0 ? '2px solid #0066ff' : '1px solid var(--border)',
+                            cursor: 'grab'
+                          }}
+                        >
                           <img src={preview} alt="Önizleme" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          
+                          {/* Cover Badge or Make Cover Button */}
+                          {i === 0 ? (
+                            <span style={{ position: 'absolute', bottom: '4px', left: '4px', background: '#0066ff', color: '#fff', fontSize: '9px', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>
+                              {t('Kapak')}
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const updatedImages = [...images];
+                                const [selectedImage] = updatedImages.splice(i, 1);
+                                updatedImages.unshift(selectedImage);
+                                setImages(updatedImages);
+
+                                const updatedPreviews = [...imagePreviews];
+                                const [selectedPreview] = updatedPreviews.splice(i, 1);
+                                updatedPreviews.unshift(selectedPreview);
+                                setImagePreviews(updatedPreviews);
+                              }}
+                              style={{ position: 'absolute', bottom: '4px', left: '4px', background: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: '9px', padding: '2px 6px', borderRadius: '4px', border: 'none', cursor: 'pointer' }}
+                            >
+                              {t('Kapak Yap')}
+                            </button>
+                          )}
+
+                          {/* Delete button */}
                           <button 
                             type="button" 
                             style={{ position: 'absolute', top: '4px', right: '4px', background: 'rgba(0,0,0,0.6)', color: '#fff', border: 'none', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '10px' }}
@@ -762,23 +924,25 @@ export default function CreateListingPage() {
               {/* Step 7: Özellikler */}
               {currentStep === 7 && (
                 <>
-                  <h2 className="step-title">{t('Donanım & Özellikler')}</h2>
-                  <p className="step-subtitle">{t('Teknenizde bulunan özellikleri seçin')}</p>
-                  <div className="create-features-list">
+                  <h2 className="step-title">{t('Özellikler')}</h2>
+                  <p className="step-subtitle">{t('Teknenizin donanım ve özelliklerini seçin')}</p>
+                  
+                  <div className="create-features">
                     {Object.entries(FEATURES_SCHEMA).map(([catKey, schema]) => (
-                      <div key={catKey} className="feature-category-group">
-                        <h3>{t(schema.label)}</h3>
-                        <div className="features-grid-inputs">
+                      <div key={catKey} className="create-feat-category">
+                        <h3 className="create-feat-cat-title">{t(schema.label)}</h3>
+                        <div className="create-feat-grid">
                           {schema.items.map(item => {
                             const isChecked = selectedFeatures[catKey]?.includes(item);
                             return (
-                              <label key={item} className="checkbox-option">
+                              <label className={`create-feat-item ${isChecked ? 'checked' : ''}`} key={item}>
                                 <input 
                                   type="checkbox" 
                                   checked={isChecked}
                                   onChange={() => handleFeatureToggle(catKey, item)}
                                 />
-                                <span>{item}</span>
+                                <span className="create-feat-check">{isChecked ? '✓' : ''}</span>
+                                <span className="create-feat-label">{t(item)}</span>
                               </label>
                             );
                           })}

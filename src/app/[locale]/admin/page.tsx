@@ -115,7 +115,7 @@ export default function AdminPage() {
         item.id === id ? { ...item, status: newStatus } : item
       ));
 
-      alert('İşlem başarıyla gerçekleştirildi.');
+      alert('İşlem başarıyla gerçekleştirildi') + '.';
     } catch (e: any) {
       alert(`Hata: ${e.message || 'İşlem başarısız oldu'}`);
     }
