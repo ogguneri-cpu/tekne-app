@@ -21,7 +21,7 @@ export const BLOG_POSTS: Record<string, BlogPost> = {
     date: '2026-06-05',
     dateFormatted: '5 Haziran 2026',
     dateFormattedEn: 'June 5, 2026',
-    image: 'https://images.unsplash.com/photo-1495657809423-db624a2298dc?q=80&w=1189&auto=format&fit=crop',
+    image: '/assets/blog-1.jpg',
     alt: 'Tekne Nasıl Satılır — Adım Adım Rehber',
     content: `
       <p>Teknenizi satmaya karar verdiniz ama nereden başlayacağınızı bilmiyor musunuz? Bu kapsamlı rehberimizde, tekne satış sürecinin tüm aşamalarını adım adım ele alıyoruz.</p>
@@ -58,7 +58,7 @@ export const BLOG_POSTS: Record<string, BlogPost> = {
     date: '2026-06-03',
     dateFormatted: '3 Haziran 2026',
     dateFormattedEn: 'June 3, 2026',
-    image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1189&auto=format&fit=crop',
+    image: '/assets/blog-satiliktekne-nedir.jpg',
     alt: 'satiliktekne.com Nedir — Türkiye\'nin Denizci Platformu',
     content: `
       <p>satiliktekne.com, Türkiye'nin denizcilik sektörüne özel olarak tasarlanmış, modern ve kullanıcı dostu tekne alım-satım ve kiralama platformudur.</p>
@@ -72,6 +72,104 @@ export const BLOG_POSTS: Record<string, BlogPost> = {
       <p>Her ilan, yatay kaydırmalı galeri, detaylı teknik spesifikasyon kartları ve kolay iletişim butonları ile zenginleştirilmiştir. Kiralık tekneler için tarih seçerek anlık fiyat hesaplaması yapabilirsiniz.</p>
       <h2>Güvenli ve Hızlı</h2>
       <p>Kullanıcı hesabı sistemi ile güvenli iletişim sağlanır. Supabase altyapısı ile verileriniz güvende, site ise ışık hızında çalışır.</p>
+    `,
+    content_en: `
+      <p>satiliktekne.com is Turkey's modern and user-friendly boat buying-selling and renting platform, designed specifically for the marine sector.</p>
+      <h2>Why satiliktekne.com?</h2>
+      <p>Unlike traditional listing sites, satiliktekne.com is fully focused on marine vehicles. It offers a customized search and filtering system for motor yachts, sailboats, catamarans, speedboats, ribs, jet skis, and deck boats.</p>
+      <h2>Post Free Listings</h2>
+      <p>Posting listings on our platform is completely free. With our simple 7-step form, you can create a professional listing in minutes.</p>
+    `
+  },
+  '3': {
+    id: '3',
+    title: 'İkinci El Tekne Fiyatları 2026: Güncel Piyasa Analizi ve Fiyat Listesi',
+    title_en: 'Second Hand Boat Prices 2026: Current Market Analysis and Price List',
+    tag: 'Fiyat Rehberi',
+    date: '2026-06-01',
+    dateFormatted: '1 Haziran 2026',
+    dateFormattedEn: 'June 1, 2026',
+    image: '/assets/blog-3.jpg',
+    alt: 'İkinci El Tekne Fiyatları 2026 Güncel Liste',
+    content: `
+      <p>2026 yılında Türkiye'de ikinci el tekne piyasası hareketli bir dönemden geçiyor. İşte segmentlere göre güncel fiyat aralıkları ve piyasa trendleri.</p>
+      <h2>Motoryat Fiyatları (30-55 fit)</h2>
+      <p>2020-2024 model yılı aralığında ikinci el motoryatlar 8.000.000 TL ile 45.000.000 TL arasında fiyatlanıyor. Azimut, Sunseeker, Princess ve Ferretti gibi premium markalar değer kaybına en dirençli modeller olarak öne çıkıyor. EUR bazlı ilanlar genellikle 200.000-1.500.000 EUR aralığında.</p>
+      <h2>Yelkenli Fiyatları (35-50 fit)</h2>
+      <p>Beneteau Oceanis, Bavaria ve Jeanneau Sun Odyssey serisi yelkenliler 6.000.000-18.000.000 TL aralığında. Yarış donanımlı modeller standart versiyonlara göre %15-25 daha yüksek fiyatlanıyor.</p>
+      <h2>Katamaran Fiyatları</h2>
+      <p>Lagoon ve Fountaine Pajot başta olmak üzere katamaran segmenti 2026'da en çok değer kazanan segment. 2022-2024 model katamaranlar 600.000-1.200.000 EUR aralığında işlem görüyor.</p>
+      <h2>Sürat Teknesi ve Bot Fiyatları</h2>
+      <p>8-10 metre aralığındaki sürat tekneleri 2.000.000-10.000.000 TL, balıkçı botları ise 500.000-5.000.000 TL aralığında. Dıştan takma motorlu modeller bakım maliyeti avantajı ile tercih ediliyor.</p>
+    `,
+    content_en: `
+      <p>The second-hand boat market in Turkey in 2026 is going through a dynamic phase. Here are the current price ranges and trends by segment.</p>
+      <h2>Motor Yacht Prices (30-55 ft)</h2>
+      <p>Second-hand motor yachts in the 2020-2024 model range are priced between 8M TRY and 45M TRY. Premium brands like Azimut, Sunseeker, Princess, and Ferretti stand out as most resilient.</p>
+    `
+  },
+  '4': {
+    id: '4',
+    title: 'Azimut Grande 36M Tanıtıldı: Karbon Fiber Gövde ve Hibrit Motor Sistemi',
+    title_en: 'Azimut Grande 36M Introduced: Carbon Fiber Hull and Hybrid Engine System',
+    tag: 'Yeni Model',
+    date: '2026-05-28',
+    dateFormatted: '28 Mayıs 2026',
+    dateFormattedEn: 'May 28, 2026',
+    image: '/assets/blog-4.jpg',
+    alt: 'Azimut Yeni Grande 36M Tanıtıldı',
+    content: `
+      <p>İtalyan lüks yat üreticisi Azimut, Cannes Yachting Festival 2026'da yeni amiral gemisi Grande 36M'i dünya ile tanıştırdı. İşte bu muhteşem yatın detayları.</p>
+      <h2>Karbon Fiber Üst Yapı</h2>
+      <p>Grande 36M, Azimut'un ilk tam karbon fiber üst yapıya sahip modeli. Bu teknoloji sayesinde yatın toplam ağırlığı %18 azaltılırken, yapısal dayanıklılık artırıldı. Sonuç: daha az yakıt tüketimi ve daha yüksek sürat.</p>
+      <h2>Volvo Penta Hibrit Propülsiyon</h2>
+      <p>IPS 1350 hibrit sistem, tam elektrikli modda 8 knot hızla 3 saate kadar seyir imkânı sunuyor. Limanlarda ve koylarda sıfır emisyon, açık denizde ise 2.400 HP toplam güç ile 24 knot maksimum hız.</p>
+      <h2>İç Mekân Tasarımı</h2>
+      <p>Achille Salvagni imzalı iç tasarım, İtalyan el sanatları ile modern minimalizmi buluşturuyor. 4 misafir kabini, ayrı mürettebat bölümü, flybridge'de jakuzi ve alfresco yemek alanı standart donanım.</p>
+    `,
+    content_en: `
+      <p>Italian luxury yacht builder Azimut introduced its new flagship Grande 36M at the Cannes Yachting Festival 2026. Here are the details of this magnificent yacht.</p>
+    `
+  },
+  '5': {
+    id: '5',
+    title: 'Elektrikli Tekne Devrimi: 2026\'da Denizlerde Sessiz Motorlar Dönemi Başlıyor',
+    title_en: 'Electric Boat Revolution: The Era of Silent Engines Begins in 2026',
+    tag: 'Teknoloji',
+    date: '2026-05-22',
+    dateFormatted: '22 Mayıs 2026',
+    dateFormattedEn: 'May 22, 2026',
+    image: '/assets/blog-5.jpg',
+    alt: 'Elektrikli Tekne Teknolojisi 2026 Gelişmeleri',
+    content: `
+      <p>Otomotiv sektöründeki elektrikli araç devrimi artık denizlere taşınıyor. 2026 yılı, elektrikli teknelerin ana akım haline gelmeye başladığı bir dönüm noktası.</p>
+      <h2>Foil Teknolojisi: Su Üstünde Uçmak</h2>
+      <p>İsveçli Candela'nın C-8 modeli, hidrofoil teknolojisi ile su yüzeyinin 50 cm üzerinde seyrediyor. Bu sayede dalga direnci %80 azalıyor, enerji verimliliği dramatik şekilde artıyor. Tek şarjla 2 saat, 25 knot hızda seyir mümkün.</p>
+      <h2>Katı Hal Bataryaları</h2>
+      <p>Toyota Marine ve CATL'nin geliştirdiği denizcilik sınıfı katı hal bataryalar, lityum-iyon teknolojisine göre %40 daha fazla enerji yoğunluğu sunuyor. Yangın riski neredeyse sıfır, ömür ise 5.000+ şarj döngüsü.</p>
+    `,
+    content_en: `
+      <p>The electric vehicle revolution in the automotive industry is now moving to the seas. 2026 is a turning point where electric boats start going mainstream.</p>
+    `
+  },
+  '6': {
+    id: '6',
+    title: 'SailGP Canlı İzle: 2026 Takvimi ve Canada Sail Grand Prix Rehberi',
+    title_en: 'Watch SailGP Live: 2026 Calendar and Canada Sail Grand Prix Guide',
+    tag: 'Yelken Yarışı',
+    date: '2026-06-08',
+    dateFormatted: '8 Haziran 2026',
+    dateFormattedEn: 'June 8, 2026',
+    image: '/assets/blog-6.jpg',
+    alt: 'SailGP Canlı İzle — 2026 Takvimi ve Canada Sail Grand Prix Rehberi',
+    content: `
+      <p>Dünyanın en hızlı ve en heyecan verici yelken yarışı serisi olan SailGP, 20-21 Haziran 2026 tarihlerinde Kanada'nın Halifax limanında nefes kesen bir etapla kaldığı yerden devam ediyor.</p>
+      <h2>Canada Sail Grand Prix Türkiye'den Nasıl İzlenir?</h2>
+      <p><strong>Ücretsiz YouTube ve Facebook Canlı Yayınları:</strong> Türkiye'de herhangi bir coğrafi kısıtlama (geo-block) bulunmadığı için Halifax etabını resmi SailGP kanallarından canlı izleyebilirsiniz.</p>
+    `,
+    content_en: `
+      <p>The world's fastest and most exciting sailing series, SailGP, continues with its thrilling Canada Sail Grand Prix on June 20-21, 2026.</p>
     `
   }
 };
+

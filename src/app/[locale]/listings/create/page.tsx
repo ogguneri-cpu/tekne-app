@@ -7,17 +7,8 @@ import { createClient } from '@/lib/supabase/client';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { User } from '@supabase/supabase-js';
-import { Check, ArrowLeft, ArrowRight, Upload, X, CheckSquare } from 'lucide-react';
 
-const STEPS = [
-  'Tür',
-  'Kategori',
-  'Detaylar',
-  'Özellikler',
-  'Fiyat & Konum',
-  'Fotoğraflar',
-  'Önizleme'
-];
+const STEP_LABELS = ['Tip', 'Kategori', 'Bilgiler', 'Fiyat', 'Konum', 'Fotoğraflar', 'Özellikler', 'Önizleme'];
 
 const CATEGORIES = [
   { value: 'motoryat', label: 'Motoryat', icon: '🚤' },
@@ -28,6 +19,12 @@ const CATEGORIES = [
   { value: 'jet_ski', label: 'Jet Ski', icon: '🏄' },
   { value: 'guverte_teknesi', label: 'Güverte Teknesi', icon: '🛳️' },
   { value: 'gulet', label: 'Gulet', icon: '⚓' }
+];
+
+const POPULAR_BRANDS = [
+  'Azimut', 'Beneteau', 'Bavaria', 'Yamaha', 'Sea Ray', 'Jeanneau', 
+  'Princess', 'Sunseeker', 'Lagoon', 'Fountaine Pajot', 'Zodiac', 
+  'Quicksilver', 'Bayliner', 'Mercury', 'Ferretti', 'Grand Soleil', 'Dufour'
 ];
 
 const FEATURES_SCHEMA = {
@@ -57,6 +54,22 @@ const FEATURES_SCHEMA = {
   }
 };
 
+const SELLER_TYPE_MAP: Record<string, string> = {
+  'sahibinden': 'Sahibinden',
+  'magazadan': 'Mağazadan',
+  'firmadan': 'Firmadan'
+};
+
+const SpecRow = ({ label, value }: { label: string; value: any }) => {
+  if (value === undefined || value === null || value === '') return null;
+  return (
+    <tr>
+      <td className="sahib-spec-label" style={{ padding: '6px 12px', borderBottom: '1px solid var(--border)', fontWeight: 600 }}>{label}</td>
+      <td className="sahib-spec-value" style={{ padding: '6px 12px', borderBottom: '1px solid var(--border)', textAlign: 'right' }}>{String(value)}</td>
+    </tr>
+  );
+};
+
 export default function CreateListingPage() {
   const t = useTranslations();
   const router = useRouter();
@@ -77,13 +90,17 @@ export default function CreateListingPage() {
   const [year, setYear] = useState('');
   const [length, setLength] = useState('');
   const [beam, setBeam] = useState('');
-  const [hullMaterial, setHullMaterial] = useState('');
   const [cabinCount, setCabinCount] = useState('');
+  const [hullType, setHullType] = useState('');
+  const [bodyMaterial, setBodyMaterial] = useState('');
   const [engineCount, setEngineCount] = useState('');
   const [enginePower, setEnginePower] = useState('');
   const [fuelType, setFuelType] = useState('');
   const [engineHours, setEngineHours] = useState('');
   const [flag, setFlag] = useState('Türkiye');
+  const [sellerType, setSellerType] = useState('sahibinden');
+  const [condition, setCondition] = useState('ikinci_el');
+  const [isSwap, setIsSwap] = useState(false);
   
   const [price, setPrice] = useState('');
   const [currency, setCurrency] = useState('TRY');
@@ -104,7 +121,6 @@ export default function CreateListingPage() {
   const [uploadingImages, setUploadingImages] = useState(false);
 
   useEffect(() => {
-    // Check if user is logged in
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) {
         alert('İlan oluşturmak için giriş yapmalısınız.');
@@ -116,7 +132,6 @@ export default function CreateListingPage() {
   }, [supabase, router]);
 
   const handleNext = () => {
-    // Basic step validation
     if (currentStep === 1 && !type) return;
     if (currentStep === 2 && !category) {
       alert('Lütfen bir kategori seçin.');
@@ -126,8 +141,12 @@ export default function CreateListingPage() {
       alert('Lütfen geçerli bir başlık girin (en az 5 karakter).');
       return;
     }
-    if (currentStep === 5 && (!price || !city)) {
-      alert('Lütfen fiyat ve konum bilgilerini doldurun.');
+    if (currentStep === 4 && !price) {
+      alert('Lütfen fiyat girin.');
+      return;
+    }
+    if (currentStep === 5 && !city) {
+      alert('Lütfen bir il seçin.');
       return;
     }
     
@@ -154,7 +173,6 @@ export default function CreateListingPage() {
     if (!e.target.files) return;
     const files = Array.from(e.target.files);
     
-    // Limits
     if (images.length + files.length > 10) {
       alert('En fazla 10 fotoğraf yükleyebilirsiniz.');
       return;
@@ -162,7 +180,6 @@ export default function CreateListingPage() {
 
     setImages([...images, ...files]);
     
-    // Read previews
     files.forEach(file => {
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -185,12 +202,11 @@ export default function CreateListingPage() {
     try {
       let uploadedUrls: string[] = [];
 
-      // 1. Upload images to Supabase Storage if present
       if (images.length > 0) {
         setUploadingImages(true);
         const promises = images.map(async (file, i) => {
           const path = `${user.id}/${Date.now()}_${i}_${file.name.replace(/[^a-zA-Z0-9.]/g, '')}`;
-          const { data, error } = await supabase.storage
+          const { error } = await supabase.storage
             .from('boat-images')
             .upload(path, file, { cacheControl: '3600', upsert: true });
 
@@ -206,20 +222,17 @@ export default function CreateListingPage() {
         uploadedUrls = await Promise.all(promises);
         setUploadingImages(false);
       } else {
-        // Fallback placeholder images if none uploaded
-        uploadedUrls = ['https://picsum.photos/seed/placeholder/800/600'];
+        uploadedUrls = ['/assets/listings/grand-soleil-40/gs40-01.jpg'];
       }
 
-      // Generate a slug
       const slugBase = title.toLowerCase()
         .replace(/[^a-z0-9\s]/g, '')
         .replace(/\s+/g, '-');
       const slug = `${slugBase}-${Date.now().toString().slice(-4)}`;
 
-      // 2. Insert into PostgreSQL Listings Table
       const record = {
         user_id: user.id,
-        status: 'pending', // awaits admin approval
+        status: 'pending',
         title,
         slug,
         description,
@@ -235,24 +248,27 @@ export default function CreateListingPage() {
         year: year ? Number(year) : null,
         length_m: length ? Number(length) : null,
         beam_m: beam ? Number(beam) : null,
-        hull_material: hullMaterial || null,
+        hull_material: bodyMaterial || null,
         cabin_count: cabinCount ? Number(cabinCount) : null,
         engine_count: engineCount ? Number(engineCount) : null,
         engine_power_hp: enginePower ? Number(enginePower) : null,
         fuel_type: fuelType || null,
         engine_hours: engineHours ? Number(engineHours) : null,
         flag: flag || 'Türkiye',
-        is_swap: selectedFeatures.isSwap ? true : false,
+        seller_type: sellerType === 'sahibinden' ? 'owner' : sellerType === 'magazadan' ? 'dealer' : 'company',
+        condition: condition === 'sifir' ? 'new' : 'used',
+        is_swap: isSwap,
         features: selectedFeatures,
         images: uploadedUrls,
-        thumbnail: uploadedUrls[0] || null
+        thumbnail: uploadedUrls[0] || null,
+        user_name: user.user_metadata?.full_name || 'Kullanıcı',
+        user_phone: user.user_metadata?.phone || '',
+        user_email: user.email || ''
       };
 
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('listings')
-        .insert(record)
-        .select()
-        .single();
+        .insert(record);
 
       if (error) throw error;
 
@@ -269,383 +285,586 @@ export default function CreateListingPage() {
     <>
       <Navbar />
 
-      <main className="min-h-screen bg-bg-body py-12">
-        <div className="container max-w-3xl">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-text-primary mb-1">{t('Yeni İlan Oluştur')}</h1>
-            <p className="text-sm text-text-secondary">{t('Birkaç basit adımda ilanınızı ekleyin')}</p>
-          </div>
+      <main id="app">
+        <div className="create-page container">
+          <div className="create-header">
+            <h1>{t('Yeni İlan Oluştur')}</h1>
+            
+            {/* Step Indicator */}
+            <div className="step-indicator" id="step-indicator">
+              {Array.from({ length: 8 }).map((_, i) => {
+                const stepNum = i + 1;
+                let cls = '';
+                if (stepNum < currentStep) cls = 'completed';
+                else if (stepNum === currentStep) cls = 'active';
 
-          {/* Progress Indicator */}
-          <div className="flex justify-between items-center mb-8 bg-bg-card p-4 rounded-xl border border-border overflow-x-auto scrollbar-none">
-            {STEPS.map((step, i) => {
-              const num = i + 1;
-              const isDone = num < currentStep;
-              const isActive = num === currentStep;
-              return (
-                <div key={step} className="flex items-center gap-2 whitespace-nowrap">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${isDone ? 'bg-green-500 text-white' : isActive ? 'bg-primary text-white' : 'bg-gray-200 dark:bg-gray-800 text-text-secondary'}`}>
-                    {isDone ? <Check size={14} strokeWidth={3} /> : num}
-                  </div>
-                  <span className={`text-xs font-semibold ${isActive ? 'text-primary' : 'text-text-secondary'}`}>{step}</span>
-                  {i < STEPS.length - 1 && <span className="text-text-muted px-1">/</span>}
-                </div>
-              );
-            })}
+                return (
+                  <React.Fragment key={stepNum}>
+                    <div className={`step-item ${cls}`}>
+                      <div className="step-circle">
+                        {stepNum < currentStep ? '✓' : stepNum}
+                      </div>
+                      <span className="step-label">{t(STEP_LABELS[i])}</span>
+                    </div>
+                    {stepNum < 8 && (
+                      <div className={`step-line ${stepNum < currentStep ? 'completed' : ''}`} />
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </div>
           </div>
 
           {errorMsg && (
-            <div className="bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 p-4 rounded-xl text-sm mb-6 border border-red-200 dark:border-red-900/50">
+            <div className="auth-error" style={{ marginBottom: '1.5rem', textAlign: 'center', background: 'rgba(255, 90, 95, 0.1)', padding: '12px', borderRadius: '12px', border: '1px solid rgba(255, 90, 95, 0.2)' }}>
               {errorMsg}
             </div>
           )}
 
-          {/* Step Contents */}
-          <div className="bg-bg-card border border-border rounded-xl p-6 shadow-sm min-h-[350px] flex flex-col">
-            
-            {/* Step 1: Type Selection */}
-            {currentStep === 1 && (
-              <div className="space-y-6 flex-1">
-                <h2 className="text-lg font-bold text-text-primary">{t('İlan Türü')}</h2>
-                <div className="grid grid-cols-2 gap-4">
-                  <button 
-                    className={`p-6 border-2 rounded-xl text-center flex flex-col items-center justify-center gap-2 transition-all ${type === 'sale' ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50 text-text-primary'}`}
-                    onClick={() => setType('sale')}
-                  >
-                    <span className="text-4xl">🏷️</span>
-                    <span className="font-bold">{t('Satılık')}</span>
-                    <span className="text-xs text-text-muted">{t('Satılık tekne ilanı verin')}</span>
-                  </button>
-                  <button 
-                    className={`p-6 border-2 rounded-xl text-center flex flex-col items-center justify-center gap-2 transition-all ${type === 'rent' ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50 text-text-primary'}`}
-                    onClick={() => setType('rent')}
-                  >
-                    <span className="text-4xl">📅</span>
-                    <span className="font-bold">{t('Kiralık')}</span>
-                    <span className="text-xs text-text-muted">{t('Kiralık tekne ilanı verin')}</span>
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Step 2: Category Selection */}
-            {currentStep === 2 && (
-              <div className="space-y-6 flex-1">
-                <h2 className="text-lg font-bold text-text-primary">{t('Tekne Kategorisi')}</h2>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {CATEGORIES.map(cat => (
+          <div className="create-form" id="create-form">
+            <div className="step-content">
+              {/* Step 1: Tip */}
+              {currentStep === 1 && (
+                <>
+                  <h2 className="step-title">{t('Ne yapmak istiyorsunuz?')}</h2>
+                  <p className="step-subtitle">{t('Teknenizi satışa çıkarın veya kiraya verin')}</p>
+                  <div className="type-cards">
                     <button 
-                      key={cat.value}
-                      className={`p-4 border rounded-xl flex flex-col items-center gap-2 transition-all ${category === cat.value ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50 text-text-primary'}`}
-                      onClick={() => setCategory(cat.value)}
+                      type="button"
+                      className={`type-card ${type === 'sale' ? 'selected' : ''}`}
+                      onClick={() => setType('sale')}
                     >
-                      <span className="text-2xl">{cat.icon}</span>
-                      <span className="text-xs font-semibold">{t(cat.label)}</span>
+                      <span className="type-card-icon">🏷️</span>
+                      <div className="type-card-title">{t('Satılık')}</div>
+                      <div className="type-card-desc">{t('Teknenizi satışa çıkarın')}</div>
                     </button>
-                  ))}
-                </div>
-              </div>
-            )}
+                    <button 
+                      type="button"
+                      className={`type-card ${type === 'rent' ? 'selected' : ''}`}
+                      onClick={() => setType('rent')}
+                    >
+                      <span className="type-card-icon">📅</span>
+                      <div className="type-card-title">{t('Kiralık')}</div>
+                      <div className="type-card-desc">{t('Teknenizi kiraya verin')}</div>
+                    </button>
+                  </div>
+                </>
+              )}
 
-            {/* Step 3: Details Form */}
-            {currentStep === 3 && (
-              <div className="space-y-4 flex-1">
-                <h2 className="text-lg font-bold text-text-primary">{t('Tekne Detayları')}</h2>
-                <div className="form-group">
-                  <label className="block text-xs font-bold text-text-secondary uppercase mb-1">{t('İlan Başlığı *')}</label>
-                  <input 
-                    type="text" 
-                    placeholder="Grand Soleil 40 | 12 Metre Yelkenli" 
-                    className="w-full border border-border rounded p-2.5 text-sm"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="block text-xs font-bold text-text-secondary uppercase mb-1">{t('Açıklama')}</label>
-                  <textarea 
-                    rows={4}
-                    placeholder="Tekneniz hakkında detaylı bilgi yazın..." 
-                    className="w-full border border-border rounded p-2.5 text-sm"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                  />
-                </div>
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="form-group">
-                    <label className="block text-xs font-bold text-text-secondary uppercase mb-1">{t('Marka')}</label>
-                    <input 
-                      type="text" 
-                      placeholder="Azimut" 
-                      className="w-full border border-border rounded p-2.5 text-sm"
-                      value={brand}
-                      onChange={(e) => setBrand(e.target.value)}
-                    />
+              {/* Step 2: Kategori */}
+              {currentStep === 2 && (
+                <>
+                  <h2 className="step-title">{t('Kategori seçin')}</h2>
+                  <p className="step-subtitle">{t('Teknenizin türünü belirleyin')}</p>
+                  <div className="category-cards">
+                    {CATEGORIES.map(cat => (
+                      <button 
+                        key={cat.value}
+                        type="button"
+                        className={`category-card ${category === cat.value ? 'selected' : ''}`}
+                        onClick={() => setCategory(cat.value)}
+                      >
+                        <span className="category-card-icon">{cat.icon}</span>
+                        <span className="category-card-label">{t(cat.label)}</span>
+                      </button>
+                    ))}
                   </div>
-                  <div className="form-group">
-                    <label className="block text-xs font-bold text-text-secondary uppercase mb-1">Model</label>
-                    <input 
-                      type="text" 
-                      placeholder="40" 
-                      className="w-full border border-border rounded p-2.5 text-sm"
-                      value={model}
-                      onChange={(e) => setModel(e.target.value)}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="block text-xs font-bold text-text-secondary uppercase mb-1">{t('Model Yılı')}</label>
-                    <input 
-                      type="number" 
-                      placeholder="2020" 
-                      className="w-full border border-border rounded p-2.5 text-sm"
-                      value={year}
-                      onChange={(e) => setYear(e.target.value)}
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="form-group">
-                    <label className="block text-xs font-bold text-text-secondary uppercase mb-1">{t('Boy (metre)')}</label>
-                    <input 
-                      type="number" 
-                      step="0.1"
-                      placeholder="12.5" 
-                      className="w-full border border-border rounded p-2.5 text-sm"
-                      value={length}
-                      onChange={(e) => setLength(e.target.value)}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="block text-xs font-bold text-text-secondary uppercase mb-1">En (metre)</label>
-                    <input 
-                      type="number" 
-                      step="0.1"
-                      placeholder="3.8" 
-                      className="w-full border border-border rounded p-2.5 text-sm"
-                      value={beam}
-                      onChange={(e) => setBeam(e.target.value)}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="block text-xs font-bold text-text-secondary uppercase mb-1">Çalışma Saati</label>
-                    <input 
-                      type="number" 
-                      placeholder="1200" 
-                      className="w-full border border-border rounded p-2.5 text-sm"
-                      value={engineHours}
-                      onChange={(e) => setEngineHours(e.target.value)}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
+                </>
+              )}
 
-            {/* Step 4: Features Selection */}
-            {currentStep === 4 && (
-              <div className="space-y-6 flex-1">
-                <h2 className="text-lg font-bold text-text-primary">{t('Donanım & Özellikler')}</h2>
-                <div className="space-y-6 max-h-[400px] overflow-y-auto pr-2">
-                  {Object.entries(FEATURES_SCHEMA).map(([catKey, schema]) => (
-                    <div key={catKey} className="space-y-2">
-                      <h3 className="text-xs font-bold text-text-primary uppercase tracking-wider">{schema.label}</h3>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                        {schema.items.map(item => {
-                          const isSel = selectedFeatures[catKey]?.includes(item);
-                          return (
-                            <button
-                              key={item}
-                              type="button"
-                              className={`p-2 border rounded-lg text-left text-xs font-medium flex items-center gap-2 transition-all ${isSel ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50 text-text-primary'}`}
-                              onClick={() => handleFeatureToggle(catKey, item)}
-                            >
-                              <span className={`w-4 h-4 rounded border flex items-center justify-center ${isSel ? 'border-primary bg-primary text-white' : 'border-border'}`}>
-                                {isSel && <Check size={10} strokeWidth={4} />}
-                              </span>
-                              <span>{item}</span>
-                            </button>
-                          );
-                        })}
+              {/* Step 3: Bilgiler */}
+              {currentStep === 3 && (
+                <>
+                  <h2 className="step-title">{t('Tekne Bilgileri')}</h2>
+                  <p className="step-subtitle">{t('Tekneniz hakkında detayları girin')}</p>
+                  <div className="form-fields">
+                    <div className="form-group">
+                      <label htmlFor="create-title">{t('İlan Başlığı *')}</label>
+                      <input 
+                        type="text" 
+                        id="create-title" 
+                        placeholder={t('ör: Azimut 50 Fly — Tam Donanımlı')} 
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        required
+                      />
+                    </div>
+                    
+                    <div className="form-group">
+                      <label>{t('Açıklama')}</label>
+                      <textarea 
+                        id="create-desc" 
+                        rows={6}
+                        placeholder={t('Teknenizin özelliklerini detaylı anlatın...')} 
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)', outline: 'none' }}
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label htmlFor="create-brand">{t('Marka')}</label>
+                      <select 
+                        id="create-brand"
+                        value={brand}
+                        onChange={(e) => setBrand(e.target.value)}
+                        style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)' }}
+                      >
+                        <option value="">{t('Marka seçin')}</option>
+                        {POPULAR_BRANDS.map(b => (
+                          <option key={b} value={b}>{b}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="form-row" style={{ display: 'flex', gap: '1rem' }}>
+                      <div className="form-group" style={{ flex: 1 }}>
+                        <label htmlFor="create-model">{t('Model')}</label>
+                        <input 
+                          type="text" 
+                          id="create-model" 
+                          placeholder="ör: Grande 36M" 
+                          value={model}
+                          onChange={(e) => setModel(e.target.value)}
+                        />
+                      </div>
+                      <div className="form-group" style={{ flex: 1 }}>
+                        <label htmlFor="create-year">{t('Model Yılı')}</label>
+                        <input 
+                          type="number" 
+                          id="create-year" 
+                          placeholder="2024" 
+                          value={year}
+                          onChange={(e) => setYear(e.target.value)}
+                        />
                       </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-            )}
 
-            {/* Step 5: Price & Location */}
-            {currentStep === 5 && (
-              <div className="space-y-4 flex-1">
-                <h2 className="text-lg font-bold text-text-primary">{t('Fiyat & Konum')}</h2>
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="col-span-2 form-group">
-                    <label className="block text-xs font-bold text-text-secondary uppercase mb-1">
-                      {type === 'sale' ? t('Satış Fiyatı *') : t('Günlük Kiralama Fiyatı *')}
-                    </label>
-                    <input 
-                      type="number" 
-                      placeholder="150000" 
-                      className="w-full border border-border rounded p-2.5 text-sm"
-                      value={price}
-                      onChange={(e) => setPrice(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="block text-xs font-bold text-text-secondary uppercase mb-1">Para Birimi</label>
-                    <select 
-                      className="w-full border border-border rounded p-2.5 text-sm bg-bg-card"
-                      value={currency}
-                      onChange={(e) => setCurrency(e.target.value)}
-                    >
-                      <option value="TRY">TL</option>
-                      <option value="EUR">EUR</option>
-                      <option value="USD">USD</option>
-                      <option value="GBP">GBP</option>
-                    </select>
-                  </div>
-                </div>
+                    <div className="form-row" style={{ display: 'flex', gap: '1rem' }}>
+                      <div className="form-group" style={{ flex: 1 }}>
+                        <label htmlFor="create-length">{t('Boy (metre)')}</label>
+                        <input 
+                          type="number" 
+                          id="create-length" 
+                          step="0.1" 
+                          placeholder="12.5" 
+                          value={length}
+                          onChange={(e) => setLength(e.target.value)}
+                        />
+                      </div>
+                      <div className="form-group" style={{ flex: 1 }}>
+                        <label htmlFor="create-beam">{t('En (metre)')}</label>
+                        <input 
+                          type="number" 
+                          id="create-beam" 
+                          step="0.1" 
+                          placeholder="4.2" 
+                          value={beam}
+                          onChange={(e) => setBeam(e.target.value)}
+                        />
+                      </div>
+                    </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="form-group">
-                    <label className="block text-xs font-bold text-text-secondary uppercase mb-1">{t('İl')}</label>
-                    <select 
-                      className="w-full border border-border rounded p-2.5 text-sm bg-bg-card"
-                      value={city}
-                      onChange={(e) => setCity(e.target.value)}
-                      required
-                    >
-                      <option value="">{t('İl seçin')}</option>
-                      <option value="İstanbul">İstanbul</option>
-                      <option value="İzmir">İzmir</option>
-                      <option value="Muğla">Muğla</option>
-                      <option value="Antalya">Antalya</option>
-                      <option value="Balıkesir">Balıkesir</option>
-                      <option value="Çanakkale">Çanakkale</option>
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label className="block text-xs font-bold text-text-secondary uppercase mb-1">{t('İlçe')}</label>
-                    <input 
-                      type="text" 
-                      placeholder="Bodrum" 
-                      className="w-full border border-border rounded p-2.5 text-sm"
-                      value={district}
-                      onChange={(e) => setDistrict(e.target.value)}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Step 6: Photos Upload */}
-            {currentStep === 6 && (
-              <div className="space-y-6 flex-1">
-                <h2 className="text-lg font-bold text-text-primary">{t('Fotoğraflar')}</h2>
-                <div className="border-2 border-dashed border-border rounded-xl p-8 text-center hover:border-primary/50 transition-colors relative cursor-pointer">
-                  <input 
-                    type="file" 
-                    multiple 
-                    accept="image/*"
-                    className="absolute inset-0 opacity-0 cursor-pointer"
-                    onChange={handleFileChange}
-                  />
-                  <div className="flex flex-col items-center gap-2">
-                    <Upload size={36} className="text-text-muted mb-2" />
-                    <span className="font-bold text-text-primary text-sm">Fotoğrafları buraya sürükleyin veya seçin</span>
-                    <span className="text-xs text-text-muted">En fazla 10 görsel yükleyebilirsiniz</span>
-                  </div>
-                </div>
-
-                {imagePreviews.length > 0 && (
-                  <div className="grid grid-cols-5 gap-3 mt-4">
-                    {imagePreviews.map((preview, i) => (
-                      <div key={i} className="relative aspect-square border border-border rounded-lg overflow-hidden group">
-                        <img src={preview} alt="Önizleme" className="w-full h-full object-cover" />
-                        <button 
-                          type="button"
-                          className="absolute top-1 right-1 bg-black/60 hover:bg-black text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={() => handleRemoveImage(i)}
+                    <div className="form-row" style={{ display: 'flex', gap: '1rem' }}>
+                      <div className="form-group" style={{ flex: 1 }}>
+                        <label htmlFor="create-cabin">{t('Kamara Sayısı')}</label>
+                        <select 
+                          id="create-cabin"
+                          value={cabinCount}
+                          onChange={(e) => setCabinCount(e.target.value)}
+                          style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)' }}
                         >
-                          <X size={12} />
-                        </button>
+                          <option value="">{t('Seçin')}</option>
+                          {['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'].map(num => (
+                            <option key={num} value={num}>{num}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="form-group" style={{ flex: 1 }}>
+                        <label htmlFor="create-hull">{t('Gövde Tipi')}</label>
+                        <select 
+                          id="create-hull"
+                          value={hullType}
+                          onChange={(e) => setHullType(e.target.value)}
+                          style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)' }}
+                        >
+                          <option value="">{t('Seçin')}</option>
+                          {['Tek Gövde', 'Çift Gövde (Katamaran)', 'RIB', 'Trimaran'].map(h => (
+                            <option key={h} value={h}>{t(h)}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="form-row" style={{ display: 'flex', gap: '1rem' }}>
+                      <div className="form-group" style={{ flex: 1 }}>
+                        <label htmlFor="create-body">{t('Gövde Malzemesi')}</label>
+                        <select 
+                          id="create-body"
+                          value={bodyMaterial}
+                          onChange={(e) => setBodyMaterial(e.target.value)}
+                          style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)' }}
+                        >
+                          <option value="">{t('Seçin')}</option>
+                          {['Fiberglas', 'Ahşap', 'Alüminyum', 'Çelik', 'Karbon Fiber', 'PVC / Şişme', 'Polyester'].map(m => (
+                            <option key={m} value={m}>{t(m)}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="form-group" style={{ flex: 1 }}>
+                        <label htmlFor="create-engine-count">{t('Motor Adedi')}</label>
+                        <select 
+                          id="create-engine-count"
+                          value={engineCount}
+                          onChange={(e) => setEngineCount(e.target.value)}
+                          style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)' }}
+                        >
+                          <option value="">{t('Seçin')}</option>
+                          {['1', '2', '3', '4'].map(num => (
+                            <option key={num} value={num}>{num}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="form-row" style={{ display: 'flex', gap: '1rem' }}>
+                      <div className="form-group" style={{ flex: 1 }}>
+                        <label htmlFor="create-engine-power">{t('Motor Gücü (HP)')}</label>
+                        <input 
+                          type="number" 
+                          id="create-engine-power" 
+                          placeholder="ör: 300" 
+                          value={enginePower}
+                          onChange={(e) => setEnginePower(e.target.value)}
+                        />
+                      </div>
+                      <div className="form-group" style={{ flex: 1 }}>
+                        <label htmlFor="create-fuel">{t('Yakıt Tipi')}</label>
+                        <select 
+                          id="create-fuel"
+                          value={fuelType}
+                          onChange={(e) => setFuelType(e.target.value)}
+                          style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)' }}
+                        >
+                          <option value="">{t('Seçin')}</option>
+                          {['Dizel', 'Benzin', 'Elektrik', 'Hibrit', 'Rüzgar (Yelken)'].map(f => (
+                            <option key={f} value={f}>{t(f)}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="form-row" style={{ display: 'flex', gap: '1rem' }}>
+                      <div className="form-group" style={{ flex: 1 }}>
+                        <label htmlFor="create-hours">{t('Çalışma Saati')}</label>
+                        <input 
+                          type="number" 
+                          id="create-hours" 
+                          placeholder="ör: 500" 
+                          value={engineHours}
+                          onChange={(e) => setEngineHours(e.target.value)}
+                        />
+                      </div>
+                      <div className="form-group" style={{ flex: 1 }}>
+                        <label htmlFor="create-flag">{t('Bandıra')}</label>
+                        <select 
+                          id="create-flag"
+                          value={flag}
+                          onChange={(e) => setFlag(e.target.value)}
+                          style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)' }}
+                        >
+                          {['Türkiye', 'İngiltere', 'ABD', 'Almanya', 'Fransa', 'İtalya', 'Yunanistan', 'Hollanda', 'Norveç', 'Malta', 'Cayman Adaları', 'Marshall Adaları', 'Diğer'].map(fl => (
+                            <option key={fl} value={fl}>{fl}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="form-group">
+                      <label>{t('Kimden')}</label>
+                      <div className="radio-group">
+                        <label className="radio-option">
+                          <input 
+                            type="radio" 
+                            name="create-seller" 
+                            value="sahibinden" 
+                            checked={sellerType === 'sahibinden'}
+                            onChange={() => setSellerType('sahibinden')}
+                          />
+                          <span>{t('Sahibinden')}</span>
+                        </label>
+                        <label className="radio-option">
+                          <input 
+                            type="radio" 
+                            name="create-seller" 
+                            value="magazadan" 
+                            checked={sellerType === 'magazadan'}
+                            onChange={() => setSellerType('magazadan')}
+                          />
+                          <span>{t('Mağazadan')}</span>
+                        </label>
+                        <label className="radio-option">
+                          <input 
+                            type="radio" 
+                            name="create-seller" 
+                            value="firmadan" 
+                            checked={sellerType === 'firmadan'}
+                            onChange={() => setSellerType('firmadan')}
+                          />
+                          <span>{t('Firmadan')}</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="form-group">
+                      <label>{t('Durumu')}</label>
+                      <div className="radio-group">
+                        <label className="radio-option">
+                          <input 
+                            type="radio" 
+                            name="create-condition" 
+                            value="sifir" 
+                            checked={condition === 'sifir'}
+                            onChange={() => setCondition('sifir')}
+                          />
+                          <span>{t('Sıfır')}</span>
+                        </label>
+                        <label className="radio-option">
+                          <input 
+                            type="radio" 
+                            name="create-condition" 
+                            value="ikinci_el" 
+                            checked={condition === 'ikinci_el'}
+                            onChange={() => setCondition('ikinci_el')}
+                          />
+                          <span>{t('İkinci El')}</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="form-group">
+                      <label className="checkbox-option">
+                        <input 
+                          type="checkbox" 
+                          id="create-swap" 
+                          checked={isSwap}
+                          onChange={(e) => setIsSwap(e.target.checked)}
+                        />
+                        <span>{t('Takas yapılır')}</span>
+                      </label>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Step 4: Fiyat */}
+              {currentStep === 4 && (
+                <>
+                  <h2 className="step-title">{t('Fiyat Belirleyin')}</h2>
+                  <p className="step-subtitle">{t('Tekneniz için uygun bir fiyat yazın')}</p>
+                  <div className="price-input-group">
+                    <div className="price-input-row" style={{ display: 'flex', gap: '1rem' }}>
+                      <input 
+                        type="number" 
+                        id="create-price" 
+                        placeholder={t('Fiyat')} 
+                        value={price}
+                        onChange={(e) => setPrice(e.target.value)}
+                        style={{ flex: 1, padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '1rem', outline: 'none' }}
+                      />
+                      <select 
+                        id="create-currency"
+                        value={currency}
+                        onChange={(e) => setCurrency(e.target.value)}
+                        style={{ width: '100px', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)' }}
+                      >
+                        <option value="TRY">TL</option>
+                        <option value="USD">USD</option>
+                        <option value="EUR">EUR</option>
+                        <option value="GBP">GBP</option>
+                      </select>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Step 5: Konum */}
+              {currentStep === 5 && (
+                <>
+                  <h2 className="step-title">{t('Konum Seçin')}</h2>
+                  <p className="step-subtitle">{t('Teknenizin bulunduğu yeri belirtin')}</p>
+                  <div className="location-fields">
+                    <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+                      <label htmlFor="create-city">{t('İl *')}</label>
+                      <select 
+                        id="create-city"
+                        value={city}
+                        onChange={(e) => setCity(e.target.value)}
+                        style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)' }}
+                      >
+                        <option value="">{t('İl seçin')}</option>
+                        {['İstanbul', 'İzmir', 'Muğla', 'Antalya', 'Balıkesir', 'Çanakkale', 'Mersin', 'Aydın', 'Trabzon', 'Bursa'].map(c => (
+                          <option key={c} value={c}>{c}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="create-district">{t('İlçe')}</label>
+                      <input 
+                        type="text" 
+                        id="create-district" 
+                        placeholder="ör: Bodrum" 
+                        value={district}
+                        onChange={(e) => setDistrict(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Step 6: Fotoğraflar */}
+              {currentStep === 6 && (
+                <>
+                  <h2 className="step-title">{t('Fotoğraf Yükleyin')}</h2>
+                  <p className="step-subtitle">{t('Teknenizin güncel fotoğraflarını ekleyin (en fazla 10 adet)')}</p>
+                  <div className="photo-upload-area" id="photo-drop-zone" style={{ position: 'relative' }}>
+                    <span className="upload-icon">📷</span>
+                    <p>{t('Fotoğrafları sürükleyip bırakın veya seçin')}</p>
+                    <input 
+                      type="file" 
+                      id="photo-file-input" 
+                      multiple 
+                      accept="image/*" 
+                      style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }}
+                      onChange={handleFileChange}
+                    />
+                  </div>
+                  
+                  {imagePreviews.length > 0 && (
+                    <div className="photo-previews" id="photo-previews" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px', marginTop: '1.5rem' }}>
+                      {imagePreviews.map((preview, i) => (
+                        <div key={i} style={{ position: 'relative', aspectRatio: '4/3', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border)' }}>
+                          <img src={preview} alt="Önizleme" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <button 
+                            type="button" 
+                            style={{ position: 'absolute', top: '4px', right: '4px', background: 'rgba(0,0,0,0.6)', color: '#fff', border: 'none', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '10px' }}
+                            onClick={() => handleRemoveImage(i)}
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* Step 7: Özellikler */}
+              {currentStep === 7 && (
+                <>
+                  <h2 className="step-title">{t('Donanım & Özellikler')}</h2>
+                  <p className="step-subtitle">{t('Teknenizde bulunan özellikleri seçin')}</p>
+                  <div className="create-features-list">
+                    {Object.entries(FEATURES_SCHEMA).map(([catKey, schema]) => (
+                      <div key={catKey} className="feature-category-group">
+                        <h3>{t(schema.label)}</h3>
+                        <div className="features-grid-inputs">
+                          {schema.items.map(item => {
+                            const isChecked = selectedFeatures[catKey]?.includes(item);
+                            return (
+                              <label key={item} className="checkbox-option">
+                                <input 
+                                  type="checkbox" 
+                                  checked={isChecked}
+                                  onChange={() => handleFeatureToggle(catKey, item)}
+                                />
+                                <span>{item}</span>
+                              </label>
+                            );
+                          })}
+                        </div>
                       </div>
                     ))}
                   </div>
+                </>
+              )}
+
+              {/* Step 8: Önizleme */}
+              {currentStep === 8 && (
+                <>
+                  <h2 className="step-title">{t('Önizleme')}</h2>
+                  <p className="step-subtitle">{t('İlanınızı kontrol edin ve yayınlayın')}</p>
+                  
+                  <div className="preview-container" style={{ padding: '1rem', background: 'var(--bg-body)', borderRadius: '16px', border: '1px solid var(--border)', marginBottom: '2rem' }}>
+                    <div style={{ marginBottom: '1rem' }}>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>
+                        {type === 'sale' ? t('Satılık') : t('Kiralık')} · {t(category)}
+                      </span>
+                      <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: '4px 0 0' }}>{title || t('Başlıksız')}</h3>
+                      <p style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--primary)', margin: '8px 0 0' }}>
+                        {price ? `${Number(price).toLocaleString('tr-TR')} ${currency === 'TRY' ? 'TL' : currency}` : t('Fiyat Belirtilmemiş')}
+                      </p>
+                    </div>
+
+                    <table className="sahib-specs-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                      <tbody>
+                        <SpecRow label={t('Marka')} value={brand} />
+                        <SpecRow label={t('Model')} value={model} />
+                        <SpecRow label={t('Model Yılı')} value={year} />
+                        <SpecRow label={t('Boy')} value={length ? `${length} m` : null} />
+                        <SpecRow label={t('En')} value={beam ? `${beam} m` : null} />
+                        <SpecRow label={t('Kamara')} value={cabinCount} />
+                        <SpecRow label={t('Gövde Tipi')} value={hullType} />
+                        <SpecRow label={t('Gövde Malzemesi')} value={bodyMaterial} />
+                        <SpecRow label={t('Motor Adedi')} value={engineCount} />
+                        <SpecRow label={t('Motor Gücü')} value={enginePower ? `${enginePower} HP` : null} />
+                        <SpecRow label={t('Çalışma Saati')} value={engineHours} />
+                        <SpecRow label={t('Bandıra')} value={flag} />
+                        <SpecRow label={t('Kimden')} value={t(SELLER_TYPE_MAP[sellerType] || 'Sahibinden')} />
+                        <SpecRow label={t('Durumu')} value={condition === 'sifir' ? t('Sıfır') : t('İkinci El')} />
+                        <SpecRow label={t('Takas')} value={isSwap ? t('Evet') : t('Hayır')} />
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
+
+              {/* Navigation buttons */}
+              <div className="step-nav">
+                {currentStep > 1 ? (
+                  <button 
+                    type="button" 
+                    className="btn-secondary" 
+                    id="btn-prev-step"
+                    onClick={handlePrev}
+                    disabled={loading}
+                  >
+                    {t('Geri')}
+                  </button>
+                ) : <div />}
+
+                {currentStep < 8 ? (
+                  <button 
+                    type="button" 
+                    className="btn-primary" 
+                    id="btn-next-step"
+                    onClick={handleNext}
+                    disabled={loading}
+                  >
+                    {t('İleri →')}
+                  </button>
+                ) : (
+                  <button 
+                    type="button" 
+                    className="btn-primary" 
+                    id="btn-publish-listing"
+                    onClick={handlePublish}
+                    disabled={loading || uploadingImages}
+                  >
+                    {loading ? t('Yayınlanıyor...') : t('🚀 Yayınla')}
+                  </button>
                 )}
               </div>
-            )}
-
-            {/* Step 7: Preview & Submit */}
-            {currentStep === 7 && (
-              <div className="space-y-6 flex-1">
-                <h2 className="text-lg font-bold text-text-primary">{t('Önizleme')}</h2>
-                <div className="space-y-4 text-sm text-text-secondary bg-bg-body p-4 rounded-xl border border-border">
-                  <div className="flex justify-between font-bold text-text-primary">
-                    <span>{t('İlan Başlığı *')}</span>
-                    <span>{title}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>{t('İlan Türü')}</span>
-                    <span>{type === 'sale' ? t('Satılık') : t('Kiralık')}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>{t('Tekne Kategorisi')}</span>
-                    <span>{category}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>{t('Marka')}</span>
-                    <span>{brand} {model}</span>
-                  </div>
-                  <div className="flex justify-between font-bold text-primary">
-                    <span>{t('Fiyat')}</span>
-                    <span>{price} {currency}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>{t('Konum')}</span>
-                    <span>{city}{district ? `, ${district}` : ''}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>{t('Fotoğraflar')}</span>
-                    <span>{images.length} {t('adet')}</span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Navigation buttons at bottom of form card */}
-            <div className="flex justify-between mt-auto pt-6 border-t border-border">
-              {currentStep > 1 ? (
-                <button 
-                  type="button"
-                  className="px-4 py-2 border border-border rounded-lg text-sm font-semibold text-text-primary hover:bg-bg-hover transition-colors"
-                  onClick={handlePrev}
-                  disabled={loading}
-                >
-                  {t('← Geri')}
-                </button>
-              ) : <div />}
-
-              {currentStep < STEPS.length ? (
-                <button 
-                  type="button"
-                  className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-semibold transition-opacity"
-                  onClick={handleNext}
-                  disabled={loading}
-                >
-                  {t('İleri →')}
-                </button>
-              ) : (
-                <button 
-                  type="button"
-                  className="px-6 py-2 bg-accent text-white rounded-lg text-sm font-semibold transition-opacity"
-                  onClick={handlePublish}
-                  disabled={loading || uploadingImages}
-                >
-                  {loading ? 'Yayınlanıyor...' : t('🚀 Yayınla')}
-                </button>
-              )}
             </div>
           </div>
         </div>
@@ -655,3 +874,4 @@ export default function CreateListingPage() {
     </>
   );
 }
+

@@ -20,7 +20,7 @@ const initialFilters: FilterState = {
   priceMax: '',
   sellerType: '',
   condition: '',
-  isSwap: false,
+  isSwap: '',
   yearMin: '',
   yearMax: '',
   lengthMin: '',
