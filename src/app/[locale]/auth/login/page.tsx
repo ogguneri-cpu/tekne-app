@@ -86,27 +86,27 @@ export default function LoginPage() {
     <>
       <Navbar />
 
-      <main className="min-h-screen bg-bg-body flex items-center justify-center py-12 px-4">
-        <div className="login-card max-w-md w-full bg-bg-card border border-border rounded-xl p-6 shadow-md" style={{ display: 'block' }}>
-          <div className="login-header text-center mb-6">
-            <img src="/assets/logo.png" alt="satiliktekne.com" className="h-12 mx-auto mb-4" />
-            <h1 className="text-xl font-bold text-text-primary">
+      <main className="login-page">
+        <div className="login-card">
+          <div className="login-header">
+            <span className="login-logo">⚓</span>
+            <h1>
               {activeTab === 'login' ? t('Hoş Geldiniz') : t('Kayıt Ol')}
             </h1>
-            <p className="text-sm text-text-secondary mt-1">
+            <p>
               {t('Tekne alın, satın veya kiralayın')}
             </p>
           </div>
 
-          <div className="login-tabs flex border-b border-border mb-6">
+          <div className="login-tabs">
             <button 
-              className={`login-tab flex-1 pb-3 text-center text-sm font-semibold transition-all border-b-2 ${activeTab === 'login' ? 'active border-primary text-primary' : 'border-transparent text-text-secondary'}`}
+              className={`login-tab ${activeTab === 'login' ? 'active' : ''}`}
               onClick={() => { setActiveTab('login'); setErrorMsg(''); setSuccessMsg(''); }}
             >
               {t('Giriş Yap')}
             </button>
             <button 
-              className={`login-tab flex-1 pb-3 text-center text-sm font-semibold transition-all border-b-2 ${activeTab === 'register' ? 'active border-primary text-primary' : 'border-transparent text-text-secondary'}`}
+              className={`login-tab ${activeTab === 'register' ? 'active' : ''}`}
               onClick={() => { setActiveTab('register'); setErrorMsg(''); setSuccessMsg(''); }}
             >
               {t('Kayıt Ol')}
@@ -114,37 +114,35 @@ export default function LoginPage() {
           </div>
 
           {errorMsg && (
-            <div className="bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 p-3 rounded-lg text-sm mb-4 border border-red-200 dark:border-red-900/50">
+            <div style={{ color: 'var(--accent)', background: 'rgba(255, 90, 95, 0.1)', padding: '10px 14px', borderRadius: '12px', fontSize: '0.85rem', marginBottom: '1.25rem', border: '1px solid rgba(255, 90, 95, 0.2)' }}>
               {errorMsg}
             </div>
           )}
 
           {successMsg && (
-            <div className="bg-green-50 dark:bg-green-950/20 text-green-600 dark:text-green-400 p-3 rounded-lg text-sm mb-4 border border-green-200 dark:border-green-900/50">
+            <div style={{ color: '#2ecc71', background: 'rgba(46, 204, 113, 0.1)', padding: '10px 14px', borderRadius: '12px', fontSize: '0.85rem', marginBottom: '1.25rem', border: '1px solid rgba(46, 204, 113, 0.2)' }}>
               {successMsg}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="auth-form space-y-4">
+          <form onSubmit={handleSubmit} className="auth-form">
             {activeTab === 'register' && (
               <>
                 <div className="form-group">
-                  <label className="block text-xs font-bold text-text-secondary uppercase mb-1">{t('Ad Soyad')}</label>
+                  <label>{t('Ad Soyad')}</label>
                   <input 
                     type="text" 
                     placeholder="Ahmet Yılmaz" 
-                    className="w-full border border-border rounded p-2 text-sm"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     required
                   />
                 </div>
                 <div className="form-group">
-                  <label className="block text-xs font-bold text-text-secondary uppercase mb-1">{t('Telefon Numarası')}</label>
+                  <label>{t('Telefon Numarası')}</label>
                   <input 
                     type="tel" 
                     placeholder="0532 000 00 00" 
-                    className="w-full border border-border rounded p-2 text-sm"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     required
@@ -154,11 +152,10 @@ export default function LoginPage() {
             )}
 
             <div className="form-group">
-              <label className="block text-xs font-bold text-text-secondary uppercase mb-1">{t('E-posta')}</label>
+              <label>{t('E-posta')}</label>
               <input 
                 type="email" 
                 placeholder="ornek@email.com" 
-                className="w-full border border-border rounded p-2 text-sm"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -166,11 +163,10 @@ export default function LoginPage() {
             </div>
 
             <div className="form-group">
-              <label className="block text-xs font-bold text-text-secondary uppercase mb-1">{t('Şifre')}</label>
+              <label>{t('Şifre')}</label>
               <input 
                 type="password" 
                 placeholder="••••••••" 
-                className="w-full border border-border rounded p-2 text-sm"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -180,7 +176,6 @@ export default function LoginPage() {
 
             <button 
               type="submit" 
-              className="btn-primary w-full bg-primary text-white py-2.5 rounded-lg text-sm font-semibold transition-opacity"
               disabled={loading}
             >
               {loading ? 'Yükleniyor...' : (activeTab === 'login' ? t('Giriş Yap') : t('Kayıt Ol'))}
@@ -188,18 +183,32 @@ export default function LoginPage() {
           </form>
 
           {/* Social Auth Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border"></div>
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-bg-card px-2 text-text-muted">VEYA</span>
-            </div>
+          <div style={{ margin: '1.5rem 0', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+            <div style={{ position: 'absolute', left: 0, right: 0, borderTop: '1px solid var(--border)', zIndex: 1 }}></div>
+            <span style={{ position: 'relative', zIndex: 2, background: 'var(--bg-card)', padding: '0 10px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+              {t('VEYA')}
+            </span>
           </div>
 
           <button 
             type="button" 
-            className="w-full border border-border hover:bg-bg-hover py-2.5 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 text-text-primary transition-colors"
+            style={{ 
+              width: '100%', 
+              padding: '12px', 
+              borderRadius: '12px', 
+              border: '1px solid var(--border)', 
+              background: 'var(--bg-body)', 
+              color: 'var(--text-primary)', 
+              fontFamily: "'Inter', sans-serif",
+              fontSize: '0.9rem', 
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '10px',
+              transition: 'all 0.3s ease'
+            }}
             onClick={handleGoogleLogin}
             disabled={loading}
           >
@@ -209,7 +218,7 @@ export default function LoginPage() {
               <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
               <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
             </svg>
-            <span>Google ile Giriş Yap</span>
+            <span>{t('Google ile Giriş Yap')}</span>
           </button>
         </div>
       </main>

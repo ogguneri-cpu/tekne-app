@@ -3,17 +3,16 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { createClient } from '@/lib/supabase/client';
-import { RefreshCw } from 'lucide-react';
 
 export interface FilterState {
   brand: string;
   city: string;
-  currency: 'TRY' | 'EUR' | 'USD' | 'GBP' | 'TL';
+  currency: string;
   priceMin: string;
   priceMax: string;
   sellerType: string;
   condition: string;
-  isSwap: boolean;
+  isSwap: boolean | string;
   yearMin: string;
   yearMax: string;
   lengthMin: string;
@@ -25,6 +24,8 @@ interface FilterPanelProps {
   filters: FilterState;
   onChange: (newFilters: FilterState) => void;
   onClear: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
 const POPULAR_BRANDS = [
@@ -33,16 +34,15 @@ const POPULAR_BRANDS = [
   'Quicksilver', 'Bayliner', 'Mercury', 'Ferretti', 'Grand Soleil', 'Dufour'
 ];
 
-export default function FilterPanel({ filters, onChange, onClear }: FilterPanelProps) {
+export default function FilterPanel({ filters, onChange, onClear, isOpen, onClose }: FilterPanelProps) {
   const t = useTranslations();
   const supabase = createClient();
   const [brands, setBrands] = useState<string[]>(POPULAR_BRANDS);
 
   useEffect(() => {
-    // Fetch distinct brands from database
     const fetchBrands = async () => {
       try {
-        const { data, error } = await supabase
+        const { data } = await supabase
           .from('brands')
           .select('name')
           .eq('is_active', true)
@@ -73,23 +73,22 @@ export default function FilterPanel({ filters, onChange, onClear }: FilterPanelP
   };
 
   return (
-    <aside className="filter-panel" id="filter-panel">
-      <div className="filter-header flex justify-between items-center pb-4 border-b border-border mb-4">
-        <h3 className="text-lg font-bold text-text-primary">{t('Filtreler')}</h3>
+    <aside className={`filter-panel ${isOpen ? 'open' : ''}`} id="filter-panel">
+      <div className="filter-header">
+        <h3>{t('Filtreler')}</h3>
         <button 
-          className="filter-clear-btn text-sm text-primary font-semibold flex items-center gap-1"
+          className="filter-clear-btn"
           onClick={onClear}
         >
-          <RefreshCw size={12} />
           {t('Temizle')}
         </button>
       </div>
 
       {/* Marka */}
-      <div className="filter-group mb-4">
-        <label className="filter-label block text-sm font-semibold mb-1">{t('Marka')}</label>
+      <div className="filter-group" id="filter-brand-group">
+        <label className="filter-label">{t('Marka')}</label>
         <select 
-          className="filter-select w-full border border-border rounded p-2" 
+          className="filter-select" 
           value={filters.brand}
           onChange={(e) => handleSelectChange('brand', e.target.value)}
         >
@@ -101,13 +100,13 @@ export default function FilterPanel({ filters, onChange, onClear }: FilterPanelP
       </div>
 
       {/* Adres: İl */}
-      <div className="filter-group mb-4">
-        <label className="filter-label block text-sm font-semibold mb-1 flex justify-between">
+      <div className="filter-group" id="filter-il-group">
+        <label className="filter-label">
           <span>{t('Adres')}</span>
-          <span className="filter-label-sub text-xs text-text-muted">{t('Türkiye')}</span>
+          <span className="filter-label-sub">{t('Türkiye')}</span>
         </label>
         <select 
-          className="filter-select w-full border border-border rounded p-2"
+          className="filter-select"
           value={filters.city}
           onChange={(e) => handleSelectChange('city', e.target.value)}
         >
@@ -126,127 +125,211 @@ export default function FilterPanel({ filters, onChange, onClear }: FilterPanelP
       </div>
 
       {/* Fiyat */}
-      <div className="filter-group mb-4">
-        <label className="filter-label block text-sm font-semibold mb-1">{t('Fiyat')}</label>
-        <div className="currency-toggles flex gap-2 mb-2">
-          {(['TRY', 'EUR', 'USD', 'GBP'] as const).map(c => (
-            <button 
-              key={c}
-              className={`currency-btn flex-1 py-1 text-xs border rounded ${filters.currency === c || (filters.currency === 'TL' && c === 'TRY') ? 'active bg-primary text-white border-primary' : 'border-border'}`}
-              onClick={() => handleSelectChange('currency', c)}
-            >
-              {c === 'TRY' ? 'TL' : c}
-            </button>
-          ))}
+      <div className="filter-group" id="filter-price-group">
+        <label className="filter-label">{t('Fiyat')}</label>
+        <div className="currency-toggles">
+          {(['TRY', 'USD', 'EUR', 'GBP'] as const).map(c => {
+            const isSelected = filters.currency === c || (filters.currency === 'TL' && c === 'TRY');
+            return (
+              <button 
+                key={c}
+                type="button"
+                className={`currency-btn ${isSelected ? 'active' : ''}`}
+                onClick={() => handleSelectChange('currency', c)}
+              >
+                {c === 'TRY' ? 'TL' : c}
+              </button>
+            );
+          })}
         </div>
-        <div className="filter-range flex gap-2">
+        <div className="price-range">
           <input 
             type="number" 
-            placeholder="Min" 
-            className="w-1/2 border border-border rounded p-2 text-sm"
+            placeholder="min" 
+            className="filter-input"
             value={filters.priceMin}
             onChange={(e) => handleSelectChange('priceMin', e.target.value)}
           />
+          <span className="price-separator">—</span>
           <input 
             type="number" 
-            placeholder="Max" 
-            className="w-1/2 border border-border rounded p-2 text-sm"
+            placeholder="max" 
+            className="filter-input"
             value={filters.priceMax}
             onChange={(e) => handleSelectChange('priceMax', e.target.value)}
           />
         </div>
       </div>
 
-      {/* Kimden (Satıcı Tipi) */}
-      <div className="filter-group mb-4">
-        <label className="filter-label block text-sm font-semibold mb-1">{t('Kimden')}</label>
-        <select
-          className="filter-select w-full border border-border rounded p-2"
-          value={filters.sellerType}
-          onChange={(e) => handleSelectChange('sellerType', e.target.value)}
-        >
-          <option value="">{t('Tümü')}</option>
-          <option value="sahibinden">{t('Sahibinden')}</option>
-          <option value="magazadan">{t('Mağazadan')}</option>
-          <option value="firmadan">{t('Firmadan')}</option>
-        </select>
+      {/* Kimden */}
+      <div className="filter-group" id="filter-seller-group">
+        <label className="filter-label">{t('Kimden')}</label>
+        <div className="radio-group">
+          <label className="radio-option">
+            <input 
+              type="radio" 
+              name="seller" 
+              value="" 
+              checked={filters.sellerType === ''} 
+              onChange={() => handleSelectChange('sellerType', '')} 
+            /> 
+            <span>{t('Tümü')}</span>
+          </label>
+          <label className="radio-option">
+            <input 
+              type="radio" 
+              name="seller" 
+              value="sahibinden" 
+              checked={filters.sellerType === 'sahibinden'} 
+              onChange={() => handleSelectChange('sellerType', 'sahibinden')} 
+            /> 
+            <span>{t('Sahibinden')}</span>
+          </label>
+          <label className="radio-option">
+            <input 
+              type="radio" 
+              name="seller" 
+              value="magazadan" 
+              checked={filters.sellerType === 'magazadan'} 
+              onChange={() => handleSelectChange('sellerType', 'magazadan')} 
+            /> 
+            <span>{t('Mağazadan')}</span>
+          </label>
+          <label className="radio-option">
+            <input 
+              type="radio" 
+              name="seller" 
+              value="firmadan" 
+              checked={filters.sellerType === 'firmadan'} 
+              onChange={() => handleSelectChange('sellerType', 'firmadan')} 
+            /> 
+            <span>{t('Firmadan')}</span>
+          </label>
+        </div>
       </div>
 
       {/* Durumu */}
-      <div className="filter-group mb-4">
-        <label className="filter-label block text-sm font-semibold mb-1">{t('Durumu')}</label>
-        <select
-          className="filter-select w-full border border-border rounded p-2"
-          value={filters.condition}
-          onChange={(e) => handleSelectChange('condition', e.target.value)}
-        >
-          <option value="">{t('Tümü')}</option>
-          <option value="sifir">{t('Sıfır')}</option>
-          <option value="ikinci_el">{t('İkinci El')}</option>
-        </select>
+      <div className="filter-group" id="filter-condition-group">
+        <label className="filter-label">{t('Durumu')}</label>
+        <div className="radio-group">
+          <label className="radio-option">
+            <input 
+              type="radio" 
+              name="condition" 
+              value="" 
+              checked={filters.condition === ''} 
+              onChange={() => handleSelectChange('condition', '')} 
+            /> 
+            <span>{t('Tümü')}</span>
+          </label>
+          <label className="radio-option">
+            <input 
+              type="radio" 
+              name="condition" 
+              value="sifir" 
+              checked={filters.condition === 'sifir'} 
+              onChange={() => handleSelectChange('condition', 'sifir')} 
+            /> 
+            <span>{t('Sıfır')}</span>
+          </label>
+          <label className="radio-option">
+            <input 
+              type="radio" 
+              name="condition" 
+              value="ikinci_el" 
+              checked={filters.condition === 'ikinci_el'} 
+              onChange={() => handleSelectChange('condition', 'ikinci_el')} 
+            /> 
+            <span>{t('İkinci El')}</span>
+          </label>
+        </div>
+      </div>
+
+      {/* Takaslı */}
+      <div className="filter-group" id="filter-swap-group">
+        <label className="filter-label">{t('Takaslı')}</label>
+        <div className="radio-group">
+          <label className="radio-option">
+            <input 
+              type="radio" 
+              name="swap" 
+              value="" 
+              checked={filters.isSwap === ''} 
+              onChange={() => handleSelectChange('isSwap', '')} 
+            /> 
+            <span>{t('Tümü')}</span>
+          </label>
+          <label className="radio-option">
+            <input 
+              type="radio" 
+              name="swap" 
+              value="true" 
+              checked={filters.isSwap === true} 
+              onChange={() => handleSelectChange('isSwap', true)} 
+            /> 
+            <span>{t('Evet')}</span>
+          </label>
+          <label className="radio-option">
+            <input 
+              type="radio" 
+              name="swap" 
+              value="false" 
+              checked={filters.isSwap === false} 
+              onChange={() => handleSelectChange('isSwap', false)} 
+            /> 
+            <span>{t('Hayır')}</span>
+          </label>
+        </div>
       </div>
 
       {/* Model Yılı */}
-      <div className="filter-group mb-4">
-        <label className="filter-label block text-sm font-semibold mb-1">{t('Model Yılı')}</label>
-        <div className="filter-range flex gap-2">
-          <input 
-            type="number" 
-            placeholder="Min" 
-            className="w-1/2 border border-border rounded p-2 text-sm"
-            value={filters.yearMin}
-            onChange={(e) => handleSelectChange('yearMin', e.target.value)}
-          />
-          <input 
-            type="number" 
-            placeholder="Max" 
-            className="w-1/2 border border-border rounded p-2 text-sm"
-            value={filters.yearMax}
-            onChange={(e) => handleSelectChange('yearMax', e.target.value)}
-          />
-        </div>
+      <div className="filter-group" id="filter-year-group">
+        <label className="filter-label">{t('Model Yılı')}</label>
+        <input 
+          type="number" 
+          id="filter-year" 
+          placeholder="ör: 2022" 
+          className="filter-input filter-input-full"
+          value={filters.yearMin}
+          onChange={(e) => handleSelectChange('yearMin', e.target.value)}
+        />
       </div>
 
       {/* Boy (metre) */}
-      <div className="filter-group mb-4">
-        <label className="filter-label block text-sm font-semibold mb-1">{t('Boy (metre)')}</label>
-        <div className="filter-range flex gap-2">
-          <input 
-            type="number" 
-            placeholder="Min" 
-            className="w-1/2 border border-border rounded p-2 text-sm"
-            value={filters.lengthMin}
-            onChange={(e) => handleSelectChange('lengthMin', e.target.value)}
-          />
-          <input 
-            type="number" 
-            placeholder="Max" 
-            className="w-1/2 border border-border rounded p-2 text-sm"
-            value={filters.lengthMax}
-            onChange={(e) => handleSelectChange('lengthMax', e.target.value)}
-          />
-        </div>
+      <div className="filter-group" id="filter-length-group">
+        <label className="filter-label">{t('Boy (metre)')}</label>
+        <input 
+          type="number" 
+          id="filter-length" 
+          placeholder="ör: 12" 
+          className="filter-input filter-input-full"
+          step="0.1"
+          value={filters.lengthMin}
+          onChange={(e) => handleSelectChange('lengthMin', e.target.value)}
+        />
       </div>
 
-      {/* Checkboxes */}
-      <div className="filter-checkboxes space-y-2 mt-4 pt-4 border-t border-border">
-        <label className="flex items-center gap-2 text-sm cursor-pointer">
+      {/* Fotoğraflı */}
+      <div className="filter-group" id="filter-photo-group">
+        <label className="checkbox-option">
           <input 
             type="checkbox" 
-            checked={filters.isSwap}
-            onChange={(e) => handleCheckboxChange('isSwap', e.target.checked)}
-          />
-          <span>{t('Takaslı')}</span>
-        </label>
-        <label className="flex items-center gap-2 text-sm cursor-pointer">
-          <input 
-            type="checkbox" 
+            id="filter-has-photo"
             checked={filters.onlyPhotos}
             onChange={(e) => handleCheckboxChange('onlyPhotos', e.target.checked)}
           />
           <span>{t('Sadece fotoğraflı ilanlar')}</span>
         </label>
       </div>
+
+      {/* Filtrele Butonu (Mobil) */}
+      <button 
+        className="btn-apply-filters" 
+        id="btn-apply-filters"
+        onClick={onClose}
+      >
+        {t('Filtrele')}
+      </button>
     </aside>
   );
 }

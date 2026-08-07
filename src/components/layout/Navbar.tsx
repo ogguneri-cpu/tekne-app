@@ -90,7 +90,6 @@ export default function Navbar() {
             <Search size={18} strokeWidth={2.5} />
           </button>
         </form>
-
         <div className="navbar-actions">
           <Link href={user ? '/listings/create' : '/auth/login'} className="btn-create-listing">
             <Plus size={16} strokeWidth={2.5} />
@@ -98,12 +97,11 @@ export default function Navbar() {
           </Link>
 
           <button 
-            className="btn-lang-toggle flex items-center gap-1" 
+            className="btn-lang-toggle" 
             onClick={toggleLanguage} 
             title={locale === 'tr' ? 'Switch to English' : 'Türkçe\'ye Geç'}
           >
-            <Globe size={16} />
-            <span>{locale === 'tr' ? 'EN' : 'TR'}</span>
+            {locale === 'tr' ? 'EN' : 'TR'}
           </button>
 
           <button 
@@ -111,7 +109,7 @@ export default function Navbar() {
             onClick={toggleTheme} 
             title={t('Tema Değiştir')}
           >
-            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+            {theme === 'dark' ? '☀️' : '🌙'}
           </button>
 
           <div className="nav-user-dropdown" style={{ position: 'relative' }}>
@@ -126,16 +124,16 @@ export default function Navbar() {
             {user && dropdownOpen && (
               <>
                 <div 
-                  className="fixed inset-0 z-10" 
+                  style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 10 }}
                   onClick={() => setDropdownOpen(false)}
                 />
-                <div className="user-menu-dropdown show" style={{ display: 'block', zIndex: 50 }}>
+                <div className="user-menu-dropdown show">
                   <Link 
                     href="/profile" 
                     className="user-menu-item"
                     onClick={() => setDropdownOpen(false)}
                   >
-                    <FileText size={16} />
+                    <span>📋</span>
                     <span>{t('İlanlarım')}</span>
                   </Link>
                   <Link 
@@ -143,15 +141,16 @@ export default function Navbar() {
                     className="user-menu-item"
                     onClick={() => setDropdownOpen(false)}
                   >
-                    <Plus size={16} />
+                    <span>➕</span>
                     <span>{t('İlan Ver')}</span>
                   </Link>
                   <div className="user-menu-divider" />
                   <button 
                     onClick={handleLogout} 
-                    className="user-menu-item danger w-full text-left"
+                    className="user-menu-item danger"
+                    style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none' }}
                   >
-                    <LogOut size={16} />
+                    <span>🚪</span>
                     <span>{t('Çıkış Yap')}</span>
                   </button>
                 </div>

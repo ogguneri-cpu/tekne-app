@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useTransition } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
+import { Link } from '@/i18n/routing';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import FilterPanel, { FilterState } from '@/components/listings/FilterPanel';
@@ -9,7 +10,7 @@ import ListingGrid from '@/components/listings/ListingGrid';
 import { createClient } from '@/lib/supabase/client';
 import { Listing } from '@/components/listings/ListingCard';
 import { CATEGORIES, DEMO_DATA } from '@/lib/utils/constants';
-import { Search, Compass } from 'lucide-react';
+import { BLOG_POSTS } from '@/lib/utils/blogData';
 
 const initialFilters: FilterState = {
   brand: '',
@@ -29,9 +30,10 @@ const initialFilters: FilterState = {
 
 export default function HomePage() {
   const t = useTranslations();
+  const locale = useLocale();
   const supabase = createClient();
 
-  const [activeType, setActiveType] = useState<'all' | 'sale' | 'rent'>('all');
+  const [activeType, setActiveType] = useState<'sale' | 'rent'>('sale');
   const [activeCategory, setActiveCategory] = useState<string>('');
   const [filters, setFilters] = useState<FilterState>(initialFilters);
   const [searchQuery, setSearchQuery] = useState('');
@@ -40,6 +42,7 @@ export default function HomePage() {
   const [filteredListings, setFilteredListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
+  const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
 
   // 1. Fetch Listings from Database on Mount
   useEffect(() => {
@@ -55,7 +58,6 @@ export default function HomePage() {
         if (error) throw error;
 
         if (data && data.length > 0) {
-          // Map snake_case database fields to camelCase props where needed
           const mapped = data.map((item: any) => ({
             id: item.id,
             user_id: item.user_id,
@@ -77,6 +79,7 @@ export default function HomePage() {
             year: item.year,
             length_meters: item.length_m ? Number(item.length_m) : undefined,
             condition: item.condition,
+            seller_type: item.seller_type,
             is_swap: item.is_swap,
             images: item.images || [],
             thumbnail: item.thumbnail,
@@ -84,7 +87,6 @@ export default function HomePage() {
           })) as Listing[];
           setRawListings(mapped);
         } else {
-          // Fallback to demo data if DB is empty
           setRawListings(DEMO_DATA);
         }
       } catch (e) {
@@ -104,9 +106,7 @@ export default function HomePage() {
       let result = [...rawListings];
 
       // Type filter (Satılık / Kiralık)
-      if (activeType !== 'all') {
-        result = result.filter(item => item.type === activeType);
-      }
+      result = result.filter(item => item.type === activeType);
 
       // Category filter
       if (activeCategory) {
@@ -151,15 +151,25 @@ export default function HomePage() {
       }
 
       if (filters.sellerType) {
-        result = result.filter(item => item.condition && item.condition === filters.sellerType);
+        const dbSellerType = 
+          filters.sellerType === 'sahibinden' ? 'owner' :
+          filters.sellerType === 'magazadan' ? 'dealer' :
+          filters.sellerType === 'firmadan' ? 'company' : 
+          filters.sellerType;
+        result = result.filter(item => item.seller_type === dbSellerType);
       }
 
       if (filters.condition) {
-        result = result.filter(item => item.condition === filters.condition);
+        const dbCondition = 
+          filters.condition === 'sifir' ? 'new' :
+          filters.condition === 'ikinci_el' ? 'used' : 
+          filters.condition;
+        result = result.filter(item => item.condition === dbCondition);
       }
 
-      if (filters.isSwap) {
-        result = result.filter(item => item.is_swap);
+      if (filters.isSwap !== undefined && filters.isSwap !== null && filters.isSwap !== '') {
+        const wantSwap = String(filters.isSwap) === 'true';
+        result = result.filter(item => item.is_swap === wantSwap);
       }
 
       if (filters.yearMin) {
@@ -193,7 +203,7 @@ export default function HomePage() {
   const handleClearFilters = () => {
     setFilters(initialFilters);
     setActiveCategory('');
-    setActiveType('all');
+    setActiveType('sale');
     setSearchQuery('');
   };
 
@@ -207,33 +217,44 @@ export default function HomePage() {
           <div className="hero-overlay"></div>
           <div className="hero-content">
             <h1 className="hero-title">
-              {t("Türkiye'nin Denizci Platformu")}
+              {locale === 'tr' ? (
+                <>Türkiye'nin<br />Denizci Platformu</>
+              ) : (
+                <>Turkey's<br />Marine Platform</>
+              )}
             </h1>
             <p className="hero-subtitle">
               {t('Aradığın Tekne Burada')}
             </p>
             <p className="hero-cta-text">
-              {t('1 Yıl Boyunca Ücretsiz İlan Ver Hızlıca Sat ve Kirala')}
+              {locale === 'tr' ? (
+                <>1 Yıl Boyunca Ücretsiz İlan Ver<br />Hızlıca Sat ve Kirala</>
+              ) : (
+                <>Free Listings for 1 Year<br />Sell and Rent Quickly</>
+              )}
             </p>
             
-            <div className="hero-type-toggle flex gap-4 mt-6 justify-center">
+            <div className="hero-type-toggle" id="hero-type-toggle">
               <button 
-                className={`type-btn flex items-center gap-2 px-4 py-2 border rounded ${activeType === 'all' ? 'active bg-primary text-white border-primary' : 'bg-transparent text-white border-white'}`}
-                onClick={() => setActiveType('all')}
-              >
-                <Compass size={18} />
-                <span>{t('Tümü')}</span>
-              </button>
-              <button 
-                className={`type-btn flex items-center gap-2 px-4 py-2 border rounded ${activeType === 'sale' ? 'active bg-primary text-white border-primary' : 'bg-transparent text-white border-white'}`}
+                className={`type-btn ${activeType === 'sale' ? 'active' : ''}`}
                 onClick={() => setActiveType('sale')}
               >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+                  <line x1="7" y1="7" x2="7.01" y2="7" />
+                </svg>
                 <span>{t('Satılık')}</span>
               </button>
               <button 
-                className={`type-btn flex items-center gap-2 px-4 py-2 border rounded ${activeType === 'rent' ? 'active bg-primary text-white border-primary' : 'bg-transparent text-white border-white'}`}
+                className={`type-btn ${activeType === 'rent' ? 'active' : ''}`}
                 onClick={() => setActiveType('rent')}
               >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                  <line x1="16" y1="2" x2="16" y2="6" />
+                  <line x1="8" y1="2" x2="8" y2="6" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
+                </svg>
                 <span>{t('Kiralık')}</span>
               </button>
             </div>
@@ -243,11 +264,11 @@ export default function HomePage() {
         {/* Categories Section */}
         <div className="categories-section" id="categories-section">
           <div className="container">
-            <div className="categories-scroll flex gap-2 overflow-x-auto py-4 scrollbar-none">
+            <div className="categories-scroll" id="categories-scroll">
               {CATEGORIES.map(cat => (
                 <button 
                   key={cat.id}
-                  className={`category-chip flex items-center gap-2 px-4 py-2 rounded-full border whitespace-nowrap transition-all ${activeCategory === cat.value ? 'active bg-primary text-white border-primary font-semibold' : 'bg-bg-card border-border hover:bg-bg-hover'}`}
+                  className={`category-chip ${activeCategory === cat.value ? 'active' : ''}`}
                   onClick={() => setActiveCategory(cat.value)}
                 >
                   <span className="cat-icon">{cat.icon}</span>
@@ -258,48 +279,125 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Main Content Grid */}
-        <div className="main-content container py-8">
-          <div className="flex flex-col lg:flex-row gap-8">
-            {/* Sidebar filter */}
-            <div className="w-full lg:w-1/4">
-              <FilterPanel 
-                filters={filters} 
-                onChange={setFilters} 
-                onClear={handleClearFilters} 
-              />
+        {/* Main Content: Filters + Listings */}
+        <div className="main-content container">
+          <FilterPanel 
+            filters={filters} 
+            onChange={setFilters} 
+            onClear={handleClearFilters} 
+            isOpen={mobileFilterOpen}
+          />
+
+          <div className="listings-area">
+            <div className="listings-header">
+              <p className="listings-count" id="listings-count">
+                {filteredListings.length} {t('ilan bulundu')}
+              </p>
+              
+              <button 
+                className="btn-mobile-filter" 
+                id="btn-mobile-filter"
+                onClick={() => setMobileFilterOpen(true)}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="4" y1="21" x2="4" y2="14" />
+                  <line x1="4" y1="10" x2="4" y2="3" />
+                  <line x1="12" y1="21" x2="12" y2="12" />
+                  <line x1="12" y1="8" x2="12" y2="3" />
+                  <line x1="20" y1="21" x2="20" y2="16" />
+                  <line x1="20" y1="12" x2="20" y2="3" />
+                  <line x1="1" y1="14" x2="7" y2="14" />
+                  <line x1="9" y1="8" x2="15" y2="8" />
+                  <line x1="17" y1="16" x2="23" y2="16" />
+                </svg>
+                <span>{t('Filtreler')}</span>
+              </button>
             </div>
 
-            {/* Results display */}
-            <div className="w-full lg:w-3/4">
-              <div className="flex justify-between items-center mb-6">
-                <span className="text-sm text-text-secondary font-medium">
-                  {filteredListings.length} {t('ilan bulundu')}
-                </span>
-                
-                {/* Search bar inside content for responsive layout */}
-                <div className="relative flex items-center max-w-xs w-full lg:hidden">
-                  <input 
-                    type="text" 
-                    placeholder={t('Tekne, marka veya konum ara')}
-                    className="border border-border rounded-full pl-4 pr-10 py-1.5 text-sm w-full"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                  <Search size={16} className="absolute right-3 text-text-muted" />
-                </div>
-              </div>
-
-              <ListingGrid 
-                listings={filteredListings} 
-                loading={loading || isPending} 
-              />
-            </div>
+            <ListingGrid 
+              listings={filteredListings} 
+              loading={loading || isPending} 
+              onClear={handleClearFilters}
+            />
           </div>
         </div>
+
+        {/* Blog Section */}
+        <section className="blog-section" id="blog-section">
+          <div className="container">
+            <div className="blog-header">
+              <h2 className="blog-section-title">{t('Blog & Haberler')}</h2>
+              <p className="blog-section-subtitle">
+                {locale === 'en' 
+                  ? 'Latest news and boat sales guides from the marine world' 
+                  : 'Denizcilik dünyasından güncel bilgiler ve tekne satış rehberleri'}
+              </p>
+            </div>
+            <div className="blog-grid">
+              {Object.values(BLOG_POSTS).map((post) => {
+                const title = locale === 'en' && post.title_en ? post.title_en : post.title;
+                const excerpt = post.content.replace(/<[^>]*>/g, '').substring(0, 180).trim() + '...';
+                return (
+                  <Link 
+                    key={post.id}
+                    href={`/blog/${post.id}`} 
+                    className="blog-card"
+                  >
+                    <div className="blog-card-image">
+                      <img src={post.image} alt={post.alt} loading="lazy" />
+                      <span className="blog-tag">{t(post.tag)}</span>
+                    </div>
+                    <div className="blog-card-body">
+                      <time className="blog-date">{locale === 'en' ? post.dateFormattedEn : post.dateFormatted}</time>
+                      <h3 className="blog-title">{title}</h3>
+                      <p className="blog-excerpt">{excerpt}</p>
+                      <span className="blog-read-more">{t('Devamını Oku →')}</span>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        {/* Contact CTA */}
+        <section className="contact-cta" id="contact-cta">
+          <div className="container">
+            <div className="cta-box">
+              <div className="cta-icon">⚓</div>
+              <h2 className="cta-title">
+                {t('Tekne Alım-Satım ve Kiralama Danışmanlığı')}
+              </h2>
+              <p className="cta-desc">
+                {locale === 'en'
+                  ? 'Our professional team is by your side in boat buying, selling and renting. Contact us for your questions.'
+                  : 'Profesyonel ekibimiz tekne alım, satım ve kiralama süreçlerinizde yanınızda. Sorularınız için bizimle iletişime geçin.'}
+              </p>
+              <div className="cta-actions">
+                <a href="mailto:yachting@cmx.com.tr" className="cta-btn-primary">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="4" width="20" height="16" rx="2" />
+                    <path d="M22 7l-10 7L2 7" />
+                  </svg>
+                  yachting@cmx.com.tr
+                </a>
+                <a href="mailto:yachting@cmx.com.tr?subject=satiliktekne.com%20İletişim" className="cta-btn-secondary">
+                  {t('Bize Yazın →')}
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
+
+      {/* Mobile Filter Overlay */}
+      <div 
+        className={`filter-overlay ${mobileFilterOpen ? 'active' : ''}`} 
+        onClick={() => setMobileFilterOpen(false)}
+      />
 
       <Footer />
     </>
   );
 }
+

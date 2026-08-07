@@ -1,12 +1,12 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
-import { getMessages, getTranslations } from 'next-intl/server';
+import { getTranslations } from 'next-intl/server';
+import { Link } from '@/i18n/routing';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { createClient } from '@/lib/supabase/server';
 import { DEMO_DATA } from '@/lib/utils/constants';
 import { formatPrice } from '@/lib/utils/format';
-import { MapPin, Phone, Mail, Award, Check } from 'lucide-react';
 import DetailGallery from './DetailGallery';
 import BookingForm from './BookingForm';
 import DOMPurify from 'isomorphic-dompurify';
@@ -39,6 +39,16 @@ const SELLER_TYPE_MAP: Record<string, string> = {
   'owner': 'Sahibinden',
   'dealer': 'Mağazadan',
   'company': 'Firmadan'
+};
+
+const SpecRow = ({ label, value }: { label: string; value: any }) => {
+  if (value === undefined || value === null || value === '') return null;
+  return (
+    <tr>
+      <td className="sahib-spec-label">{label}</td>
+      <td className="sahib-spec-value">{String(value)}</td>
+    </tr>
+  );
 };
 
 export default async function ListingDetailPage({ params }: ListingDetailPageProps) {
@@ -116,220 +126,197 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
     ? formatPrice(listing.sale_price, listing.currency)
     : formatPrice(listing.price_per_day, listing.currency);
 
-  const priceLabel = listing.type === 'sale' ? t('Satış Fiyatı') : t('Günlük Kiralama Fiyatı');
+  const priceLabel = listing.type === 'sale' ? t('Satış Fiyatı') : t('/ gün kiralama');
 
-  // Sanitize HTML description using isomorphic-dompurify (prevents XSS - fixes G6)
   const cleanDescription = DOMPurify.sanitize(displayDesc || t('Açıklama eklenmemiş'));
 
   return (
     <>
       <Navbar />
 
-      <main className="min-h-screen bg-bg-body pt-8 pb-16">
+      <main id="app">
+        {/* ── Back Button ── */}
         <div className="container">
-          {/* Top Section: Title & Location */}
-          <div className="mb-6">
-            <h1 className="text-2xl lg:text-3xl font-extrabold text-text-primary mb-2">
-              {displayTitle}
-            </h1>
-            <div className="flex flex-wrap items-center gap-4 text-sm text-text-secondary">
-              <span className="flex items-center gap-1">
-                <MapPin size={16} />
-                {listing.location_ilce ? `${listing.location_ilce}, ` : ''}{listing.location_il}
-              </span>
-              <span>•</span>
-              <span className="bg-primary/10 text-primary px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase">
-                {t(catInfo.label)}
-              </span>
-              <span className="bg-accent/10 text-accent px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase">
-                {listing.type === 'sale' ? t('Satılık') : t('Kiralık')}
-              </span>
-            </div>
+          <Link href="/" className="sahib-back-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M19 12H5" />
+              <polyline points="12 19 5 12 12 5" />
+            </svg>
+            {t('← Geri')}
+          </Link>
+        </div>
+
+        {/* ── Top Section: Gallery + Sidebar ── */}
+        <div className="sahib-top container">
+          {/* Gallery (left) */}
+          <div className="sahib-gallery">
+            <DetailGallery images={listing.images || []} alt={displayTitle} />
           </div>
 
-          {/* Grid Layout: Gallery + Sidebar */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Left Column: Gallery & Details */}
-            <div className="lg:col-span-2 space-y-8">
-              {/* Photo Gallery Component */}
-              <DetailGallery images={listing.images || []} alt={displayTitle} />
-
-              {/* Technical Specifications */}
-              <div className="bg-bg-card rounded-xl p-6 border border-border">
-                <h2 className="text-xl font-bold text-text-primary mb-4 pb-2 border-b border-border">
-                  {t('Tekne Bilgileri')}
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
-                  <div className="flex justify-between py-1.5 border-b border-divider text-sm">
-                    <span className="text-text-secondary">{t('Marka')}</span>
-                    <span className="font-semibold text-text-primary">{listing.brand}</span>
-                  </div>
-                  <div className="flex justify-between py-1.5 border-b border-divider text-sm">
-                    <span className="text-text-secondary">{t('Model Yılı')}</span>
-                    <span className="font-semibold text-text-primary">{listing.year || t('Belirtilmemiş')}</span>
-                  </div>
-                  <div className="flex justify-between py-1.5 border-b border-divider text-sm">
-                    <span className="text-text-secondary">{t('Boy (metre)')}</span>
-                    <span className="font-semibold text-text-primary">{listing.length_meters ? `${listing.length_meters} m` : t('Belirtilmemiş')}</span>
-                  </div>
-                  <div className="flex justify-between py-1.5 border-b border-divider text-sm">
-                    <span className="text-text-secondary">{t('En (metre)')}</span>
-                    <span className="font-semibold text-text-primary">{listing.beam_meters ? `${listing.beam_meters} m` : t('Belirtilmemiş')}</span>
-                  </div>
-                  <div className="flex justify-between py-1.5 border-b border-divider text-sm">
-                    <span className="text-text-secondary">{t('Durumu')}</span>
-                    <span className="font-semibold text-text-primary">
-                      {listing.condition === 'sifir' ? t('Sıfır') : t('İkinci El')}
-                    </span>
-                  </div>
-                  <div className="flex justify-between py-1.5 border-b border-divider text-sm">
-                    <span className="text-text-secondary">{t('Takas')}</span>
-                    <span className="font-semibold text-text-primary">
-                      {listing.is_swap ? t('Evet') : t('Hayır')}
-                    </span>
-                  </div>
-                  <div className="flex justify-between py-1.5 border-b border-divider text-sm">
-                    <span className="text-text-secondary">{t('Gövde Malzemesi')}</span>
-                    <span className="font-semibold text-text-primary">{listing.hull_material || t('Belirtilmemiş')}</span>
-                  </div>
-                  <div className="flex justify-between py-1.5 border-b border-divider text-sm">
-                    <span className="text-text-secondary">{t('Kamara Sayısı')}</span>
-                    <span className="font-semibold text-text-primary">{listing.cabin_count || t('Belirtilmemiş')}</span>
-                  </div>
-                  <div className="flex justify-between py-1.5 border-b border-divider text-sm">
-                    <span className="text-text-secondary">{t('Motor Gücü (HP)')}</span>
-                    <span className="font-semibold text-text-primary">{listing.engine_power ? `${listing.engine_power} HP` : t('Belirtilmemiş')}</span>
-                  </div>
-                  <div className="flex justify-between py-1.5 border-b border-divider text-sm">
-                    <span className="text-text-secondary">{t('Çalışma Saati')}</span>
-                    <span className="font-semibold text-text-primary">{listing.engine_hours ? listing.engine_hours.toLocaleString('tr-TR') : t('Belirtilmemiş')}</span>
-                  </div>
-                  <div className="flex justify-between py-1.5 border-b border-divider text-sm">
-                    <span className="text-text-secondary">{t('Bandıra')}</span>
-                    <span className="font-semibold text-text-primary">{listing.flag || t('Belirtilmemiş')}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Description Section */}
-              <div className="bg-bg-card rounded-xl p-6 border border-border">
-                <h2 className="text-xl font-bold text-text-primary mb-4 pb-2 border-b border-border">
-                  {t('İlan Açıklaması')}
-                </h2>
-                <div 
-                  className="prose dark:prose-invert max-w-none text-text-secondary text-sm leading-relaxed"
-                  dangerouslySetInnerHTML={{ __html: cleanDescription }}
-                />
-              </div>
-
-              {/* Features Checklist */}
-              {listing.features && Object.keys(listing.features).length > 0 && (
-                <div className="bg-bg-card rounded-xl p-6 border border-border">
-                  <h2 className="text-xl font-bold text-text-primary mb-6 pb-2 border-b border-border">
-                    {t('Özellikler')}
-                  </h2>
-                  <div className="space-y-6">
-                    {Object.entries(listing.features).map(([catKey, items]) => {
-                      if (!Array.isArray(items) || items.length === 0) return null;
-                      return (
-                        <div key={catKey}>
-                          <h3 className="text-sm font-bold text-text-primary mb-3 uppercase tracking-wider">
-                            {t(FEATURES_SCHEMA[catKey] || catKey)}
-                          </h3>
-                          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                            {items.map((item: string) => (
-                              <div key={item} className="flex items-center gap-2 text-sm text-text-secondary">
-                                <span className="bg-success/10 text-success p-0.5 rounded-full">
-                                  <Check size={12} strokeWidth={3} />
-                                </span>
-                                <span>{item}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
+          {/* Sidebar (right) */}
+          <div className="sahib-sidebar">
+            {/* Price card */}
+            <div className="sahib-price-card">
+              <div className="sahib-price">{priceText}</div>
+              <div className="sahib-price-label">{priceLabel}</div>
             </div>
 
-            {/* Right Column: Sidebar (Price & Contact) */}
-            <div className="space-y-6">
-              {/* Price Display */}
-              <div className="bg-bg-card rounded-xl p-6 border border-border shadow-md">
-                <span className="text-xs text-text-muted block uppercase font-bold tracking-wider mb-1">
-                  {priceLabel}
-                </span>
-                <div className="text-3xl font-extrabold text-primary mb-1">
-                  {priceText}
-                </div>
-                {listing.type === 'rent' && (
-                  <span className="text-xs text-text-secondary">
-                    {t('/ gün kiralama')}
-                  </span>
-                )}
-              </div>
-
-              {/* Booking form for rental */}
-              {listing.type === 'rent' && (
+            {/* Booking section for rental */}
+            {listing.type === 'rent' && (
+              <div className="sahib-booking">
                 <BookingForm pricePerDay={listing.price_per_day || 0} currency={listing.currency} />
+              </div>
+            )}
+
+            {/* Contact & Seller info */}
+            <div className="sahib-contact-card">
+              <div className="sahib-seller-card">
+                <div className="sahib-seller-logo">
+                  <img src="/assets/logo.png" alt={userName} />
+                </div>
+                <div className="sahib-seller-info">
+                  <span className="sahib-seller-name">{userName}</span>
+                  <span className="sahib-seller-loc">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                      <circle cx="12" cy="10" r="3" />
+                    </svg>
+                    {[listing.location_ilce, listing.location_il].filter(Boolean).join(', ')}
+                  </span>
+                </div>
+              </div>
+
+              {(listing.user_phone || listing.phone) && (
+                <a 
+                  href={`tel:${String(listing.user_phone || listing.phone).replace(/\s|\(|\)/g, '')}`} 
+                  className="sahib-phone-btn sahib-phone-mobile"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+                    <line x1="12" y1="18" x2="12.01" y2="18" />
+                  </svg>
+                  Cep: {listing.user_phone || listing.phone}
+                </a>
               )}
 
-              {/* Contact Card */}
-              <div className="bg-bg-card rounded-xl p-6 border border-border shadow-md">
-                <h3 className="text-md font-bold text-text-primary mb-4 pb-2 border-b border-border">
-                  {t('İletişim Bilgileri')}
-                </h3>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="bg-primary/10 text-primary p-2.5 rounded-full font-bold text-sm">
-                    {userName.substring(0, 2).toUpperCase()}
-                  </div>
-                  <div>
-                    <div className="font-semibold text-text-primary text-sm">
-                      {listing.contact?.person || userName}
-                    </div>
-                    <div className="text-xs text-text-muted uppercase font-bold">
-                      {listing.contact?.store || t(SELLER_TYPE_MAP[listing.seller_type || 'owner'] || 'Sahibinden')}
-                    </div>
-                  </div>
-                </div>
+              {listing.user_email && (
+                <a 
+                  href={`mailto:${listing.user_email}`} 
+                  className="sahib-phone-btn"
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="4" width="20" height="16" rx="2" />
+                    <path d="M22 7l-10 7L2 7" />
+                  </svg>
+                  {t('E-posta Gönder')}
+                </a>
+              )}
+            </div>
 
-                <div className="space-y-3">
-                  {(listing.contact?.mobile || listing.user_phone || listing.contact?.phone) && (
-                    <a 
-                      href={`tel:${String(listing.contact?.mobile || listing.user_phone || listing.contact?.phone).replace(/\s|\(|\)/g, '')}`}
-                      className="flex items-center justify-center gap-2 w-full py-2.5 border border-border hover:border-primary text-sm font-semibold rounded-lg text-text-primary transition-colors"
-                    >
-                      <Phone size={16} />
-                      <span>{t('Telefon')}: {listing.contact?.mobile || listing.user_phone || listing.contact?.phone}</span>
-                    </a>
-                  )}
-
-                  {(listing.contact?.mobile || listing.user_phone) && (
-                    <a 
-                      href={`https://wa.me/${String(listing.contact?.mobile || listing.user_phone).replace(/\D/g, '')}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-center gap-2 w-full py-2.5 bg-[#25D366] hover:bg-[#20ba59] text-white text-sm font-semibold rounded-lg transition-colors"
-                    >
-                      <span>💬 {t('WhatsApp ile Ulaşın')}</span>
-                    </a>
-                  )}
-
-                  {(listing.user_email) && (
-                    <a 
-                      href={`mailto:${listing.user_email}`}
-                      className="flex items-center justify-center gap-2 w-full py-2.5 border border-border hover:border-primary text-sm font-semibold rounded-lg text-text-primary transition-colors"
-                    >
-                      <Mail size={16} />
-                      <span>{t('E-posta Gönder')}</span>
-                    </a>
-                  )}
-                </div>
+            {/* Quick specs */}
+            <div className="sahib-quick-specs">
+              <div className="sahib-qs-item">
+                <span className="sahib-qs-label">{t('İlan No')}</span>
+                <span className="sahib-qs-value">{String(listing.id).substring(0, 10)}</span>
+              </div>
+              <div className="sahib-qs-item">
+                <span className="sahib-qs-label">{t('İlan Tarihi')}</span>
+                <span className="sahib-qs-value">
+                  {listing.created_at ? new Date(listing.created_at).toLocaleDateString(locale === 'en' ? 'en-US' : 'tr-TR') : ''}
+                </span>
+              </div>
+              <div className="sahib-qs-item">
+                <span className="sahib-qs-label">{t('Kategori')}</span>
+                <span className="sahib-qs-value">{catInfo.icon} {t(catInfo.label)}</span>
               </div>
             </div>
           </div>
+        </div>
+
+        {/* ── İlan Açıklaması Section ── */}
+        <div className="sahib-body container">
+          {/* Badges */}
+          <div className="sahib-badges">
+            <span className="badge badge-category">{catInfo.icon} {t(catInfo.label)}</span>
+            <span className="badge badge-type">
+              {listing.type === 'sale' ? '🏷️ ' + t('Satılık') : '📅 ' + t('Kiralık')}
+            </span>
+            {listing.condition && (
+              <span className="badge badge-condition">
+                {t(listing.condition === 'sifir' ? 'Sıfır' : 'İkinci El')}
+              </span>
+            )}
+            {listing.is_swap && (
+              <span className="badge badge-swap">🔄 {t('Takaslı')}</span>
+            )}
+          </div>
+
+          {/* Title */}
+          <h1 className="sahib-title">{displayTitle}</h1>
+          <p className="sahib-location">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+              <circle cx="12" cy="10" r="3" />
+            </svg>
+            {[listing.location_ilce, listing.location_il].filter(Boolean).join(', ') || t('Belirtilmemiş')}
+          </p>
+
+          {/* Specs Table */}
+          <div className="sahib-specs-section">
+            <h2>{t('Tekne Özellikleri')}</h2>
+            <table className="sahib-specs-table">
+              <tbody>
+                <SpecRow label={t('Marka')} value={listing.brand} />
+                <SpecRow label={t('Model Yılı')} value={listing.year} />
+                <SpecRow label={t('Boy')} value={listing.length_meters ? `${listing.length_meters} ${t('metre')}` : null} />
+                <SpecRow label={t('En')} value={listing.beam_meters ? `${listing.beam_meters} ${t('metre')}` : null} />
+                <SpecRow label={t('Kategori')} value={t(catInfo.label)} />
+                <SpecRow label={t('Gövde Malzemesi')} value={listing.hull_material} />
+                <SpecRow label={t('Kamara Sayısı')} value={listing.cabin_count} />
+                <SpecRow label={t('Motor Gücü')} value={listing.engine_power ? `${listing.engine_power} HP` : null} />
+                <SpecRow label={t('Çalışma Saati')} value={listing.engine_hours ? listing.engine_hours.toLocaleString('tr-TR') : null} />
+                <SpecRow label={t('Bandıra')} value={listing.flag} />
+                <SpecRow label={t('Durumu')} value={listing.condition === 'sifir' ? t('Sıfır') : t('İkinci El')} />
+                <SpecRow label={t('Kimden')} value={t(SELLER_TYPE_MAP[listing.seller_type || 'owner'] || 'Sahibinden')} />
+                <SpecRow label={t('Takas')} value={listing.is_swap ? t('Evet') : t('Hayır')} />
+              </tbody>
+            </table>
+          </div>
+
+          {/* Description */}
+          <div className="sahib-desc-section">
+            <h2>{t('İlan Açıklaması')}</h2>
+            <div 
+              className="sahib-desc-text"
+              dangerouslySetInnerHTML={{ __html: cleanDescription }}
+            />
+          </div>
+
+          {/* Features Checklist */}
+          {listing.features && Object.keys(listing.features).length > 0 && (
+            <div className="sahib-features-section">
+              <h2>{t('Özellikler')}</h2>
+              {Object.entries(listing.features).map(([catKey, items]) => {
+                if (!Array.isArray(items) || items.length === 0) return null;
+                return (
+                  <div key={catKey} className="sahib-feat-cat">
+                    <h3 className="sahib-feat-cat-title">
+                      {t(FEATURES_SCHEMA[catKey] || catKey)}
+                    </h3>
+                    <div className="sahib-feat-grid">
+                      {items.map((item: string) => (
+                        <div key={item} className="sahib-feat-item active">
+                          <span className="sahib-feat-check">✓</span>
+                          <span className="sahib-feat-label">{item}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </main>
 

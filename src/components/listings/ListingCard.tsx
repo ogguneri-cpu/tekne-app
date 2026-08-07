@@ -31,6 +31,7 @@ export interface Listing {
   images?: string[];
   thumbnail?: string;
   is_featured?: boolean;
+  seller_type?: string;
 }
 
 const CATEGORY_MAP: Record<string, { label: string; icon: string }> = {
@@ -69,59 +70,60 @@ export default function ListingCard({ listing }: { listing: Listing }) {
   const metaText = metaParts.join(' · ');
 
   return (
-    <Link href={`/listings/${listing.slug || listing.id}`} className="listing-card-link block">
-      <article className="listing-card">
-        <div className="card-image-wrap relative">
+    <Link href={`/listings/${listing.slug || listing.id}`} className="listing-card-link">
+      <article className="listing-card" data-id={listing.id}>
+        <div className="card-image-wrap">
           <img 
-            className="card-image w-full h-48 object-cover" 
+            className="card-image" 
             src={img} 
             alt={displayTitle} 
             loading="lazy" 
           />
-          <span className="card-category-badge absolute top-2 left-2 bg-black/60 text-white px-2 py-1 rounded text-xs">
+          <span className="card-category-badge">
             {categoryInfo.icon} {t(categoryInfo.label)}
           </span>
           {listing.images && listing.images.length > 1 && (
-            <span className="card-img-count absolute top-2 right-2 flex items-center gap-1 bg-black/60 text-white px-2 py-1 rounded text-xs">
-              <ImageIcon size={12} />
+            <span className="card-img-count">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                <circle cx="8.5" cy="8.5" r="1.5" />
+                <polyline points="21 15 16 10 5 21" />
+              </svg>
               {listing.images.length}
             </span>
           )}
           {listing.condition === 'sifir' && (
-            <span className="badge badge-new absolute bottom-2 left-2 bg-success text-white px-2 py-0.5 rounded text-xs font-bold">
-              {t('Sıfır')}
-            </span>
+            <span className="badge badge-new">{t('Sıfır')}</span>
           )}
           {listing.is_swap && (
-            <span className="badge badge-swap absolute bottom-2 right-2 bg-warning text-white px-2 py-0.5 rounded text-xs font-bold">
-              {t('Takas')}
-            </span>
+            <span className="badge badge-swap">{t('Takas')}</span>
           )}
         </div>
-        <div className="card-body p-4">
-          <h3 className="card-title text-md font-semibold line-clamp-1 mb-1">
-            {displayTitle}
-          </h3>
+        <div className="card-body">
+          <h3 className="card-title">{displayTitle}</h3>
           {locationText && (
-            <span className="card-location flex items-center gap-1 text-sm text-text-secondary mb-2">
-              <MapPin size={14} />
+            <span className="card-location">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                <circle cx="12" cy="10" r="3" />
+              </svg>
               {locationText}
             </span>
           )}
           {metaText && (
-            <span className="card-meta text-xs text-text-muted block mb-3">
+            <span className="card-meta">
               {metaText}
             </span>
           )}
-          <div className="card-price-row flex justify-between items-center mt-auto">
+          <div className="card-price-row">
             {listing.type === 'sale' ? (
-              <span className="card-price text-lg font-bold text-primary">
+              <span className="card-price">
                 {formatPrice(listing.sale_price, listing.currency)}
               </span>
             ) : (
-              <span className="card-price text-lg font-bold text-primary">
+              <span className="card-price">
                 {formatPrice(listing.price_per_day, listing.currency)}
-                <small className="text-xs font-normal text-text-secondary"> / {t('gün')}</small>
+                <small> / {t('gün')}</small>
               </span>
             )}
           </div>
