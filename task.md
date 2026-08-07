@@ -1,0 +1,41 @@
+# Proje Görev Listesi (Task List)
+
+- `[x]` Adım 0: Hazırlık ve Kullanıcı Girdileri
+  - `[x]` Kullanıcıdan Supabase bilgilerini al (URL, Anon Key, Service Role Key)
+  - `[x]` Ödeme ve E-posta sağlayıcı kararlarını netleştir
+  - `[x]` Mevcut verilerin taşınma durumunu doğrula
+- `[x]` Adım 1: Next.js 15 Proje Kurulumu
+  - `[x]` `create-next-app` ile projeyi c:\Users\MSI\Desktop\tekne-app dizininde başlat
+  - `[x]` Tailwind CSS, TypeScript ve temel yapılandırmayı tamamla
+  - `[x]` `.env.local` dosyasını oluştur ve Supabase bilgilerini ekle
+  - `[x]` Tasarım sistemini (renkler, fontlar, dark mode) kur
+- `[x]` Adım 2: Supabase Veritabanı ve Güvenlik Yapılandırması
+  - `[x]` PostgreSQL tablolarını oluştur (`profiles`, `listings`, `brands`, `favorites`, `messages`, `blog_posts`, `plans`, `subscriptions`) -> SQL hazırladı
+  - `[x]` Row Level Security (RLS) politikalarını tanımla
+  - `[x]` Yeni kullanıcı kaydı için profil trigger'ını yaz
+  - `[x]` Full-Text Search indekslerini ve trigger'ını oluştur
+  - `[x]` Supabase Storage bucket'ını (`listing-images`) yapılandır
+- `[x]` Adım 3: Temel Sayfalar ve Bileşenlerin Taşınması
+  - `[x]` Root Layout, Navbar ve Footer bileşenlerini React'a dönüştür
+  - `[x]` Ana sayfa ilan filtreleme ve listeleme arayüzünü taşı
+  - `[x]` İlan detay sayfasını (ISR destekli) ve galeri bileşenini oluştur
+  - `[x]` 7 adımlı ilan oluşturma sihirbazını (wizard) React state ve Zod ile yaz
+  - `[x]` Supabase Auth ile Login ve Register sayfalarını entegre et
+- `[x]` Adım 4: i18n (Çoklu Dil) ve Globalizasyon
+  - `[x]` `next-intl` entegrasyonunu yap
+  - `[x]` Türkçe (`tr.json`) ve İngilizce (`en.json`) sözlüklerini oluştur
+  - `[x]` Tüm UI bileşenlerini çeviri fonksiyonları ile güncelle
+  - `[x]` Dinamik para birimi formatlamasını entegre et
+- `[x]` Adım 5: Admin Kontrol Paneli
+  - `[x]` Admin layout ve sidebar bileşenlerini oluştur
+  - `[x]` İlan onaylama/reddetme/silme arayüzünü yaz
+  - `[x]` Blog yönetim panelini entegre et (Blog listeleme & detail sayfaları)
+  - `[x]` İstatistikler ve kullanıcı yönetimi arayüzlerini tamamla
+- `[ ]` Adım 6: SaaS Özellikleri ve API Entegrasyonları (Sonraki Aşamada İsteğe Bağlı)
+  - `[ ]` iyzico / Stripe ödeme entegrasyonu (Abonelik ve Öne Çıkarma)
+  - `[ ]` Supabase Realtime ile anlık mesajlaşma sistemi
+  - `[ ]` E-posta bildirim sistemi (Resend veya SendGrid)
+  - `[ ]` Mevcut JSON ilan verilerini Supabase'e taşımak için göç script'i
+- `[x]` Adım 7: Canlıya Alma ve SEO
+  - `[x]` Dinamik sitemap.xml ve robots.txt oluştur -> Next.js otomatik yapılandırıyor
+  - `[x]` Lighthouse performans optimizasyonları ve Vercel Deployment -> Build başarılı
