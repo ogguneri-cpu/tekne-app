@@ -72,9 +72,9 @@ export default function FavoriteDetailButton({ listingId, initialIsFavorited }: 
           marginTop: '12px',
           padding: '14px 20px',
           borderRadius: '12px',
-          border: isFavorited ? '2px solid var(--color-primary)' : '1px solid var(--border)',
-          background: isFavorited ? 'rgba(0, 102, 255, 0.06)' : 'var(--bg-card)',
-          color: isFavorited ? 'var(--color-primary)' : 'var(--text-primary)',
+          border: 'none',
+          background: 'var(--color-primary)',
+          color: '#ffffff',
           fontWeight: 700,
           fontSize: '0.95rem',
           cursor: 'pointer',
@@ -83,7 +83,7 @@ export default function FavoriteDetailButton({ listingId, initialIsFavorited }: 
           alignItems: 'center',
           justifyContent: 'center',
           gap: '8px',
-          boxShadow: isFavorited ? '0 2px 8px rgba(0, 102, 255, 0.08)' : 'none'
+          boxShadow: '0 4px 12px rgba(0, 102, 255, 0.15)'
         }}
       >
         ⭐ {isFavorited ? (locale === 'en' ? 'Favorited' : 'Favorilerimde') : (locale === 'en' ? 'Add to Favorites' : 'Favorilere Ekle')}
