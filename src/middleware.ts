@@ -31,8 +31,8 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Match all pathnames except API routes and static asset paths
+  // Match all pathnames except API routes, auth callbacks, and static asset paths
   matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!api|auth/callback|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };
