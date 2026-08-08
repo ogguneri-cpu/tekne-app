@@ -121,7 +121,7 @@ export default function ListingCard({ listing, isFavorited, onToggleFavorite }: 
             </span>
           </button>
           <div className="card-badges">
-            <span className="badge badge-category">
+            <span className="badge badge-category" style={{ background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', color: '#ffffff', border: 'none' }}>
               {categoryInfo.icon} {t(categoryInfo.label)}
             </span>
             {listing.condition === 'sifir' && (
