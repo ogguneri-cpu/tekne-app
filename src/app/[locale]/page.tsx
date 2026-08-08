@@ -44,6 +44,8 @@ export default function HomePage() {
   const [isPending, startTransition] = useTransition();
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
   const [blogs, setBlogs] = useState<any[]>([]);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [userName, setUserName] = useState('');
 
   // 0. Parse URL Query Parameters on Load (e.g. from Blog CTA links)
   useEffect(() => {
@@ -59,6 +61,33 @@ export default function HomePage() {
       }
     }
   }, []);
+
+  // 0.1 Check if redirected from email verification callback (Welcome popup)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('welcome') === 'true') {
+        const checkUser = async () => {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('full_name')
+              .eq('id', user.id)
+              .maybeSingle();
+
+            setUserName(profile?.full_name || user.user_metadata?.full_name || (locale === 'en' ? 'Valued Member' : 'Değerli Üyemiz'));
+            setShowWelcomeModal(true);
+          }
+        };
+        checkUser();
+        
+        // Remove ?welcome=true query param without reload
+        const newUrl = window.location.pathname + window.location.search.replace(/[?&]welcome=true/, '').replace(/^&/, '?');
+        window.history.replaceState({}, document.title, newUrl);
+      }
+    }
+  }, [locale]);
 
   // 1. Fetch Listings from Database on Mount
   useEffect(() => {
@@ -436,6 +465,102 @@ export default function HomePage() {
         className={`filter-overlay ${mobileFilterOpen ? 'active' : ''}`} 
         onClick={() => setMobileFilterOpen(false)}
       />
+
+      {/* Welcome Modal */}
+      {showWelcomeModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(15, 23, 42, 0.65)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: '1.5rem'
+        }}>
+          <div style={{
+            background: 'var(--bg-card)',
+            borderRadius: '24px',
+            padding: '2.5rem 2rem',
+            maxWidth: '460px',
+            width: '100%',
+            textAlign: 'center',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+            animation: 'scaleIn 0.3s ease-out'
+          }}>
+            <img 
+              src="/assets/favicon.jpg" 
+              alt="satiliktekne.com" 
+              style={{ 
+                width: '80px', 
+                height: '80px', 
+                borderRadius: '18px', 
+                objectFit: 'cover', 
+                marginBottom: '1.5rem', 
+                display: 'block', 
+                marginLeft: 'auto', 
+                marginRight: 'auto' 
+              }} 
+            />
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.75rem' }}>
+              {locale === 'en' ? `Welcome Aboard, ${userName}! ⛵` : `Aramıza Hoş Geldiniz, ${userName}! ⛵`}
+            </h2>
+            <p style={{ fontSize: '0.925rem', color: 'var(--text-secondary)', lineHeight: '1.6', marginBottom: '2rem' }}>
+              {locale === 'en'
+                ? 'Your email address has been successfully verified. Your account is active and you are now logged in! You can now start using our platform.'
+                : 'E-posta adresiniz başarıyla doğrulandı. Hesabınız aktif edildi ve oturumunuz açıldı! Artık platformumuzu kullanmaya başlayabilirsiniz.'}
+            </p>
+            
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <Link
+                href="/listings/create"
+                onClick={() => setShowWelcomeModal(false)}
+                style={{
+                  flex: 1,
+                  padding: '14px 18px',
+                  background: 'var(--color-primary)',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '12px',
+                  fontSize: '0.9rem',
+                  fontWeight: 700,
+                  textDecoration: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  boxShadow: '0 4px 12px rgba(0, 102, 255, 0.2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px'
+                }}
+              >
+                ➕ {locale === 'en' ? 'Post Free Listing' : 'Ücretsiz İlan Ver'}
+              </Link>
+              <button 
+                onClick={() => setShowWelcomeModal(false)}
+                style={{
+                  flex: 1,
+                  padding: '14px 18px',
+                  background: 'var(--bg-body)',
+                  color: 'var(--text-primary)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '12px',
+                  fontSize: '0.9rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                🏠 {locale === 'en' ? 'Go to Homepage' : 'Ana Sayfa'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </>
