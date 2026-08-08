@@ -111,8 +111,16 @@ export default function LoginPage() {
             <img 
               src="/assets/favicon.jpg" 
               alt="satiliktekne.com" 
-              className="login-logo-img" 
-              style={{ width: '64px', height: '64px', borderRadius: '14px', objectFit: 'cover', marginBottom: '1.25rem', border: '1px solid var(--border)' }} 
+              style={{ 
+                width: '64px', 
+                height: '64px', 
+                borderRadius: '12px', 
+                objectFit: 'cover', 
+                marginBottom: '1.25rem', 
+                display: 'block', 
+                marginLeft: 'auto', 
+                marginRight: 'auto' 
+              }} 
             />
             <h1>
               {activeTab === 'login' ? t('Hoş Geldiniz') : t('Kayıt Ol')}
@@ -281,7 +289,6 @@ export default function LoginPage() {
         }}>
           <div style={{
             background: 'var(--bg-card)',
-            border: '1px solid var(--border)',
             borderRadius: '24px',
             padding: '2.5rem 2rem',
             maxWidth: '460px',
@@ -293,7 +300,16 @@ export default function LoginPage() {
             <img 
               src="/assets/favicon.jpg" 
               alt="satiliktekne.com" 
-              style={{ width: '80px', height: '80px', borderRadius: '18px', objectFit: 'cover', marginBottom: '1.5rem', border: '1px solid var(--border)', boxShadow: '0 4px 10px rgba(0,0,0,0.05)' }} 
+              style={{ 
+                width: '80px', 
+                height: '80px', 
+                borderRadius: '18px', 
+                objectFit: 'cover', 
+                marginBottom: '1.5rem', 
+                display: 'block', 
+                marginLeft: 'auto', 
+                marginRight: 'auto' 
+              }} 
             />
             <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.75rem' }}>
               Aramıza Hoş Geldiniz! ⛵
