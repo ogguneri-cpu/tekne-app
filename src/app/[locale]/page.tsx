@@ -360,9 +360,9 @@ export default function HomePage() {
           <div className="hero-content">
             <h1 className="hero-title">
               {locale === 'tr' ? (
-                <>Türkiye'nin<br />Denizci Platformu</>
+                <>Türkiye'nin Satılık ve Kiralık<br />Tekne & Yat İlanları</>
               ) : (
-                <>Turkey's<br />Marine Platform</>
+                <>Boats & Yachts for Sale<br />& Rental in Turkey</>
               )}
             </h1>
             <p className="hero-subtitle">
