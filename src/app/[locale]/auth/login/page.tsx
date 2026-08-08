@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { useRouter } from '@/i18n/routing';
 import { createClient } from '@/lib/supabase/client';
 import Navbar from '@/components/layout/Navbar';
@@ -9,6 +9,7 @@ import Footer from '@/components/layout/Footer';
 
 export default function LoginPage() {
   const t = useTranslations();
+  const locale = useLocale();
   const router = useRouter();
   const supabase = createClient();
 
@@ -57,7 +58,7 @@ export default function LoginPage() {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/auth/callback`,
+            emailRedirectTo: `${window.location.origin}/auth/callback?locale=${locale}`,
             data: {
               full_name: fullName,
               phone: phone
