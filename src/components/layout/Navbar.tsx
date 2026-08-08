@@ -91,7 +91,7 @@ export default function Navbar() {
           </button>
         </form>
         <div className="navbar-actions">
-          <Link href={user ? '/listings/create' : '/auth/login'} className="btn-create-listing">
+          <Link href={user ? '/tekne-ilan-ver' : '/auth/login'} className="btn-create-listing">
             <Plus size={16} strokeWidth={2.5} />
             <span>{t('Ücretsiz İlan Ver')}</span>
           </Link>
@@ -145,7 +145,7 @@ export default function Navbar() {
                   <span>{t('Profil Ayarları')}</span>
                 </Link>
                 <Link 
-                  href="/listings/create" 
+                  href="/tekne-ilan-ver" 
                   className="user-menu-item"
                   onClick={() => setDropdownOpen(false)}
                 >

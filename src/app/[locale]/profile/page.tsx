@@ -261,7 +261,7 @@ export default function ProfileDashboardPage() {
                   {listings.length === 0 ? (
                     <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>
                       <p style={{ fontSize: '1.1rem', marginBottom: '1.5rem' }}>Henüz eklenmiş bir ilanınız bulunmamaktadır.</p>
-                      <Link href="/listings/create" className="btn-create-listing" style={{ display: 'inline-flex', padding: '12px 24px' }}>
+                      <Link href="/tekne-ilan-ver" className="btn-create-listing" style={{ display: 'inline-flex', padding: '12px 24px' }}>
                         + İlk İlanını Ver
                       </Link>
                     </div>

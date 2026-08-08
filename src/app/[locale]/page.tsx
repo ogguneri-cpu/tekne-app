@@ -517,7 +517,7 @@ export default function HomePage() {
             
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
               <Link
-                href="/listings/create"
+                href="/tekne-ilan-ver"
                 onClick={() => setShowWelcomeModal(false)}
                 style={{
                   flex: 1,
