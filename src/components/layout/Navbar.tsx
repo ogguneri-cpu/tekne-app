@@ -137,6 +137,14 @@ export default function Navbar() {
                   <span>{t('İlanlarım')}</span>
                 </Link>
                 <Link 
+                  href="/profile?tab=favorites" 
+                  className="user-menu-item"
+                  onClick={() => setDropdownOpen(false)}
+                >
+                  <span>👌</span>
+                  <span>{t('Favori İlanlarım')}</span>
+                </Link>
+                <Link 
                   href="/profile?tab=settings" 
                   className="user-menu-item"
                   onClick={() => setDropdownOpen(false)}

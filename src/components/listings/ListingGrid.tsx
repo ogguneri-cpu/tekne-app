@@ -8,9 +8,11 @@ interface ListingGridProps {
   listings: Listing[];
   loading: boolean;
   onClear?: () => void;
+  favoriteIds?: string[];
+  onToggleFavorite?: (listingId: string, isFavorited: boolean, e: React.MouseEvent) => void;
 }
 
-export default function ListingGrid({ listings, loading, onClear }: ListingGridProps) {
+export default function ListingGrid({ listings, loading, onClear, favoriteIds, onToggleFavorite }: ListingGridProps) {
   const t = useTranslations();
 
   if (loading) {
@@ -48,7 +50,11 @@ export default function ListingGrid({ listings, loading, onClear }: ListingGridP
           className="listing-card-wrapper"
           style={{ animationDelay: `${index * 60}ms` }}
         >
-          <ListingCard listing={listing} />
+          <ListingCard 
+            listing={listing} 
+            isFavorited={favoriteIds?.includes(listing.id)} 
+            onToggleFavorite={onToggleFavorite} 
+          />
         </div>
       ))}
     </div>

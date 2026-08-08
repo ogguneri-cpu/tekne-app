@@ -88,6 +88,7 @@ export default function EditListingPage({ params }: EditListingPageProps) {
   const [saveLoading, setSaveLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [unauthorized, setUnauthorized] = useState(false);
+  const [initialPrice, setInitialPrice] = useState<number | null>(null);
 
   // Form Fields State
   const [type, setType] = useState<'sale' | 'rent'>('sale');
@@ -200,6 +201,7 @@ export default function EditListingPage({ params }: EditListingPageProps) {
       // Price Formatting (Turkey dot style)
       const rawPrice = listing.type === 'rent' ? listing.rent_price_daily : listing.sale_price;
       setPrice(rawPrice ? new Intl.NumberFormat('tr-TR').format(rawPrice) : '');
+      setInitialPrice(rawPrice || null);
       setCurrency(listing.currency || 'TRY');
       setCity(listing.city || '');
       setDistrict(listing.district || '');
@@ -336,6 +338,24 @@ export default function EditListingPage({ params }: EditListingPageProps) {
         .eq('id', id);
 
       if (updateError) throw updateError;
+
+      // Trigger price drop email notification if the price decreased
+      if (
+        numericPrice !== null &&
+        initialPrice !== null &&
+        numericPrice < initialPrice
+      ) {
+        fetch('/api/notify-price-drop', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            listingId: id,
+            oldPrice: initialPrice,
+            newPrice: numericPrice,
+            currency: currency
+          })
+        }).catch(err => console.error('Error triggering price drop notification:', err));
+      }
 
       alert('İlan başarıyla güncellendi.');
       router.push('/profile');

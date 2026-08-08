@@ -47,7 +47,13 @@ const CATEGORY_MAP: Record<string, { label: string; icon: string }> = {
 
 
 
-export default function ListingCard({ listing }: { listing: Listing }) {
+interface ListingCardProps {
+  listing: Listing;
+  isFavorited?: boolean;
+  onToggleFavorite?: (listingId: string, currentFavorited: boolean, e: React.MouseEvent) => void;
+}
+
+export default function ListingCard({ listing, isFavorited, onToggleFavorite }: ListingCardProps) {
   const t = useTranslations();
   const locale = useLocale();
 
@@ -79,6 +85,40 @@ export default function ListingCard({ listing }: { listing: Listing }) {
             alt={displayTitle} 
             loading="lazy" 
           />
+          {/* Favorite button (Okay hand 👌) */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (onToggleFavorite) {
+                onToggleFavorite(listing.id, !!isFavorited, e);
+              }
+            }}
+            className={`card-favorite-btn ${isFavorited ? 'active' : ''}`}
+            style={{
+              position: 'absolute',
+              top: '12px',
+              right: '12px',
+              width: '36px',
+              height: '36px',
+              borderRadius: '50%',
+              background: isFavorited ? 'var(--color-primary)' : 'rgba(15, 23, 42, 0.6)',
+              backdropFilter: 'blur(4px)',
+              border: isFavorited ? '2px solid #fff' : '1px solid rgba(255, 255, 255, 0.3)',
+              color: '#fff',
+              fontSize: '1.2rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              zIndex: 10,
+              transition: 'all 0.2s ease',
+              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.15)'
+            }}
+          >
+            👌
+          </button>
           <span className="card-category-badge">
             {categoryInfo.icon} {t(categoryInfo.label)}
           </span>

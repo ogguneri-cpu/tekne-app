@@ -9,6 +9,7 @@ import { DEMO_DATA } from '@/lib/utils/constants';
 import { formatPrice } from '@/lib/utils/format';
 import DetailGallery from './DetailGallery';
 import BookingForm from './BookingForm';
+import FavoriteDetailButton from '@/components/listings/FavoriteDetailButton';
 
 interface ListingDetailPageProps {
   params: Promise<{ locale: string; slug: string }>;
@@ -139,6 +140,19 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
       notFound();
     }
 
+    // 2.1 Check if favorited
+    let initialIsFavorited = false;
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session && listing) {
+      const { data: favData } = await supabase
+        .from('favorites')
+        .select('id')
+        .eq('user_id', session.user.id)
+        .eq('listing_id', listing.id)
+        .maybeSingle();
+      initialIsFavorited = !!favData;
+    }
+
     const catInfo = CATEGORY_MAP[listing.category.toLowerCase()] || { icon: '🚢', label: listing.category };
     const displayTitle = (locale === 'en' && listing.title_en) ? listing.title_en : listing.title;
     const displayDesc = (locale === 'en' && listing.description_en) ? listing.description_en : listing.description;
@@ -182,6 +196,9 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
                 <div className="sahib-price-label">{priceLabel}</div>
                 <div className="sahib-price" style={{ color: 'var(--color-primary)' }}>{priceText}</div>
               </div>
+
+              {/* Favorite Button */}
+              <FavoriteDetailButton listingId={listing.id} initialIsFavorited={initialIsFavorited} />
 
               {/* Booking section for rental */}
               {listing.type === 'rent' && (

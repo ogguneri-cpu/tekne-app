@@ -20,7 +20,8 @@ export default function ProfileDashboardPage() {
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState({ full_name: '', phone: '' });
   const [listings, setListings] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'listings' | 'settings'>('listings');
+  const [favorites, setFavorites] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<'listings' | 'settings' | 'favorites'>('listings');
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -31,6 +32,8 @@ export default function ProfileDashboardPage() {
     const tabParam = searchParams.get('tab');
     if (tabParam === 'settings') {
       setActiveTab('settings');
+    } else if (tabParam === 'favorites') {
+      setActiveTab('favorites');
     } else {
       setActiveTab('listings');
     }
@@ -69,6 +72,20 @@ export default function ProfileDashboardPage() {
 
       if (listingsData) {
         setListings(listingsData);
+      }
+
+      // 4. Fetch user favorites
+      const { data: favoritesData } = await supabase
+        .from('favorites')
+        .select(`
+          id,
+          notify_price_change,
+          listings (*)
+        `)
+        .eq('user_id', session.user.id);
+
+      if (favoritesData) {
+        setFavorites(favoritesData.filter((fav: any) => fav.listings !== null));
       }
 
       setLoading(false);
@@ -133,6 +150,37 @@ export default function ProfileDashboardPage() {
       alert(err.message || 'İlan silinirken bir hata oluştu.');
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  // Toggle Favorite Price Drop Notification
+  const handleToggleNotification = async (favoriteId: string, currentVal: boolean) => {
+    const { error } = await supabase
+      .from('favorites')
+      .update({ notify_price_change: !currentVal })
+      .eq('id', favoriteId);
+    
+    if (!error) {
+      setFavorites(prev => prev.map(fav => fav.id === favoriteId ? { ...fav, notify_price_change: !currentVal } : fav));
+    } else {
+      alert('Bildirim tercihi güncellenirken hata oluştu.');
+    }
+  };
+
+  // Remove Listing from Favorites
+  const handleRemoveFavorite = async (favoriteId: string) => {
+    const confirmRemove = window.confirm('Bu ilanı favorilerinizden kaldırmak istediğinize emin misiniz?');
+    if (!confirmRemove) return;
+
+    const { error } = await supabase
+      .from('favorites')
+      .delete()
+      .eq('id', favoriteId);
+    
+    if (!error) {
+      setFavorites(prev => prev.filter(fav => fav.id !== favoriteId));
+    } else {
+      alert('İlan favorilerden kaldırılırken hata oluştu.');
     }
   };
 
@@ -223,6 +271,27 @@ export default function ProfileDashboardPage() {
                   }}
                 >
                   <span>📋</span> {t('İlanlarım')}
+                </button>
+                <button
+                  onClick={() => setActiveTab('favorites')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    width: '100%',
+                    padding: '12px 16px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    fontSize: '0.95rem',
+                    fontWeight: activeTab === 'favorites' ? 600 : 500,
+                    background: activeTab === 'favorites' ? 'var(--color-primary)' : 'transparent',
+                    color: activeTab === 'favorites' ? '#fff' : 'var(--text-primary)',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  <span>👌</span> {t('Favorilerim')}
                 </button>
                 <button
                   onClick={() => setActiveTab('settings')}
@@ -341,6 +410,112 @@ export default function ProfileDashboardPage() {
                                 }}
                               >
                                 <Trash2 size={14} /> Sil
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* TAB 3: FAVORİLERİM */}
+              {activeTab === 'favorites' && (
+                <div>
+                  <h2 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: '1.5rem', color: 'var(--text-primary)', borderBottom: '2px solid var(--border)', paddingBottom: '0.5rem' }}>
+                    {t('Favorilerim')} ({favorites.length})
+                  </h2>
+
+                  {favorites.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>
+                      <p style={{ fontSize: '1.1rem', marginBottom: '1.5rem' }}>Henüz favorilere eklenmiş bir ilanınız bulunmamaktadır.</p>
+                      <Link href="/" className="btn-create-listing" style={{ display: 'inline-flex', padding: '12px 24px' }}>
+                        ⛵ İlanları Keşfet
+                      </Link>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                      {favorites.map(item => {
+                        const listing = item.listings;
+                        if (!listing) return null;
+                        const img = (listing.images && listing.images.length > 0)
+                          ? listing.images[0]
+                          : 'https://picsum.photos/seed/placeholder/300/200';
+
+                        return (
+                          <div 
+                            key={item.id} 
+                            style={{
+                              display: 'flex',
+                              gap: '1rem',
+                              alignItems: 'center',
+                              padding: '1rem',
+                              borderRadius: '12px',
+                              border: '1px solid var(--border)',
+                              background: 'var(--bg-body)',
+                              flexWrap: 'wrap'
+                            }}
+                          >
+                            <Link href={`/listings/${listing.slug}`} style={{ display: 'block', borderRadius: '8px', overflow: 'hidden' }}>
+                              <img 
+                                src={img} 
+                                alt={listing.title} 
+                                style={{ width: '100px', height: '75px', borderRadius: '8px', objectFit: 'cover' }}
+                              />
+                            </Link>
+                            <div style={{ flex: 1, minWidth: '200px' }}>
+                              <Link href={`/listings/${listing.slug}`} style={{ textDecoration: 'none' }}>
+                                <h3 style={{ fontSize: '1rem', fontWeight: 600, margin: '0 0 4px', color: 'var(--text-primary)' }}>{listing.title}</h3>
+                              </Link>
+                              <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                                {listing.city} / {listing.district} · {listing.year}
+                              </span>
+                              <div style={{ marginTop: '4px', fontWeight: 700, color: 'var(--color-primary)', fontSize: '0.95rem' }}>
+                                {listing.type === 'sale' 
+                                  ? formatPrice(listing.sale_price, listing.currency)
+                                  : formatPrice(listing.rent_price_daily, listing.currency) + ' / gün'}
+                              </div>
+                            </div>
+                            
+                            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                              <button 
+                                onClick={() => handleToggleNotification(item.id, item.notify_price_change)}
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '6px',
+                                  padding: '8px 14px',
+                                  background: item.notify_price_change ? 'rgba(0, 102, 255, 0.08)' : 'var(--bg-card)',
+                                  color: item.notify_price_change ? 'var(--color-primary)' : 'var(--text-muted)',
+                                  border: item.notify_price_change ? '1px solid var(--color-primary)' : '1px solid var(--border)',
+                                  borderRadius: '8px',
+                                  fontSize: '0.85rem',
+                                  fontWeight: 600,
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s ease'
+                                }}
+                              >
+                                {item.notify_price_change ? '🔔 Fiyat Takibi Açık' : '🔕 Fiyat Takibi Kapalı'}
+                              </button>
+                              <button 
+                                onClick={() => handleRemoveFavorite(item.id)}
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '6px',
+                                  padding: '8px 14px',
+                                  background: 'rgba(255, 90, 95, 0.08)',
+                                  color: 'rgb(255, 90, 95)',
+                                  border: '1px solid rgba(255, 90, 95, 0.2)',
+                                  borderRadius: '8px',
+                                  fontSize: '0.85rem',
+                                  fontWeight: 600,
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s ease'
+                                }}
+                              >
+                                ❌ Kaldır
                               </button>
                             </div>
                           </div>

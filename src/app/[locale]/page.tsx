@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useTransition } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
-import { Link } from '@/i18n/routing';
+import { Link, useRouter } from '@/i18n/routing';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import FilterPanel, { FilterState } from '@/components/listings/FilterPanel';
@@ -31,6 +31,7 @@ const initialFilters: FilterState = {
 export default function HomePage() {
   const t = useTranslations();
   const locale = useLocale();
+  const router = useRouter();
   const supabase = createClient();
 
   const [activeType, setActiveType] = useState<'sale' | 'rent'>('sale');
@@ -46,6 +47,9 @@ export default function HomePage() {
   const [blogs, setBlogs] = useState<any[]>([]);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [userName, setUserName] = useState('');
+  const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
+  const [showNotifyModal, setShowNotifyModal] = useState(false);
+  const [pendingFavoriteListingId, setPendingFavoriteListingId] = useState<string | null>(null);
 
   // 0. Parse URL Query Parameters on Load (e.g. from Blog CTA links)
   useEffect(() => {
@@ -88,6 +92,68 @@ export default function HomePage() {
       }
     }
   }, [locale]);
+
+  // 1.1 Fetch User's Favorites on Mount
+  useEffect(() => {
+    async function loadFavorites() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const { data, error } = await supabase
+          .from('favorites')
+          .select('listing_id')
+          .eq('user_id', session.user.id);
+        if (data && !error) {
+          setFavoriteIds(data.map((fav: any) => fav.listing_id));
+        }
+      }
+    }
+    loadFavorites();
+  }, []);
+
+  const handleToggleFavorite = async (listingId: string, currentFavorited: boolean, e: React.MouseEvent) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      router.push('/auth/login');
+      return;
+    }
+
+    if (currentFavorited) {
+      const { error } = await supabase
+        .from('favorites')
+        .delete()
+        .eq('user_id', session.user.id)
+        .eq('listing_id', listingId);
+      
+      if (!error) {
+        setFavoriteIds(prev => prev.filter(id => id !== listingId));
+      }
+    } else {
+      setPendingFavoriteListingId(listingId);
+      setShowNotifyModal(true);
+    }
+  };
+
+  const handleConfirmFavorite = async (notifyPriceChange: boolean) => {
+    if (!pendingFavoriteListingId) return;
+    
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+
+    const { error } = await supabase
+      .from('favorites')
+      .insert({
+        user_id: session.user.id,
+        listing_id: pendingFavoriteListingId,
+        notify_price_change: notifyPriceChange
+      });
+
+    if (!error) {
+      setFavoriteIds(prev => [...prev, pendingFavoriteListingId]);
+    }
+    
+    setShowNotifyModal(false);
+    setPendingFavoriteListingId(null);
+  };
 
   // 1. Fetch Listings from Database on Mount
   useEffect(() => {
@@ -380,6 +446,8 @@ export default function HomePage() {
               listings={filteredListings} 
               loading={loading || isPending} 
               onClear={handleClearFilters}
+              favoriteIds={favoriteIds}
+              onToggleFavorite={handleToggleFavorite}
             />
           </div>
         </div>
@@ -556,6 +624,110 @@ export default function HomePage() {
                 }}
               >
                 🏠 {locale === 'en' ? 'Go to Homepage' : 'Ana Sayfa'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Price Drop Notification Preference Modal */}
+      {showNotifyModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(15, 23, 42, 0.65)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: '1.5rem'
+        }}>
+          <div style={{
+            background: 'var(--bg-card)',
+            borderRadius: '24px',
+            padding: '2.5rem 2rem',
+            maxWidth: '460px',
+            width: '100%',
+            textAlign: 'center',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+            animation: 'scaleIn 0.3s ease-out'
+          }}>
+            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔔</div>
+            <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '1rem' }}>
+              {locale === 'en' ? 'Price Drop Notification' : 'Fiyat Değişikliğinde Haber Ver'}
+            </h2>
+            <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', lineHeight: '1.6', marginBottom: '2rem' }}>
+              {locale === 'en'
+                ? 'Would you like to receive email notifications when the price of this listing decreases?'
+                : 'Bu ilan favorilerinize eklenirken, fiyatı düştüğünde e-posta ile bildirim almak ister misiniz?'}
+            </p>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <button
+                onClick={() => handleConfirmFavorite(true)}
+                style={{
+                  width: '100%',
+                  padding: '14px',
+                  background: 'var(--color-primary)',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '12px',
+                  fontSize: '0.95rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  boxShadow: '0 4px 12px rgba(0, 102, 255, 0.2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}
+              >
+                ✉️ {locale === 'en' ? 'Yes, Send Email Notifications' : 'Evet, Fiyat Düşünce Haber Ver'}
+              </button>
+              <button
+                onClick={() => handleConfirmFavorite(false)}
+                style={{
+                  width: '100%',
+                  padding: '14px',
+                  background: 'var(--bg-body)',
+                  color: 'var(--text-primary)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '12px',
+                  fontSize: '0.95rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}
+              >
+                👌 {locale === 'en' ? 'Only Add to Favorites' : 'Sadece Favorilere Ekle'}
+              </button>
+              <button
+                onClick={() => {
+                  setShowNotifyModal(false);
+                  setPendingFavoriteListingId(null);
+                }}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  background: 'transparent',
+                  color: 'var(--text-muted)',
+                  border: 'none',
+                  fontSize: '0.9rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  marginTop: '6px'
+                }}
+              >
+                {locale === 'en' ? 'Cancel' : 'Vazgeç'}
               </button>
             </div>
           </div>
