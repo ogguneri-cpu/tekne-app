@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/routing';
 import { createClient } from '@/lib/supabase/client';
@@ -20,6 +20,20 @@ export default function LoginPage() {
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+
+  // Check if redirected from email verification callback
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('verified') === 'true') {
+        setActiveTab('login');
+        setSuccessMsg('E-posta adresiniz başarıyla doğrulandı! Şimdi giriş yapabilirsiniz.');
+        // Clean URL params without page reload
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,7 +67,12 @@ export default function LoginPage() {
         
         // Supabase returns user immediately but might require email confirmation
         if (data.user && data.session === null) {
-          setSuccessMsg('Kayıt başarılı! Lütfen e-posta kutunuzu kontrol edin ve üyeliğinizi onaylayın.');
+          setShowModal(true); // Open the verification modal
+          // Clear inputs
+          setFullName('');
+          setPhone('');
+          setEmail('');
+          setPassword('');
         } else {
           setSuccessMsg('Kayıt başarılı! Giriş yapılıyor...');
           setTimeout(() => {
@@ -89,7 +108,12 @@ export default function LoginPage() {
       <main className="login-page">
         <div className="login-card">
           <div className="login-header">
-            <span className="login-logo">⚓</span>
+            <img 
+              src="/assets/favicon.jpg" 
+              alt="satiliktekne.com" 
+              className="login-logo-img" 
+              style={{ width: '64px', height: '64px', borderRadius: '14px', objectFit: 'cover', marginBottom: '1.25rem', border: '1px solid var(--border)' }} 
+            />
             <h1>
               {activeTab === 'login' ? t('Hoş Geldiniz') : t('Kayıt Ol')}
             </h1>
@@ -177,6 +201,22 @@ export default function LoginPage() {
             <button 
               type="submit" 
               disabled={loading}
+              style={{
+                width: '100%',
+                padding: '14px',
+                background: 'var(--color-primary)',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '12px',
+                fontSize: '1rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                boxShadow: '0 4px 12px rgba(0, 102, 255, 0.2)',
+                marginTop: '1rem',
+                fontFamily: 'inherit'
+              }}
+              className="auth-submit-btn"
             >
               {loading ? 'Yükleniyor...' : (activeTab === 'login' ? t('Giriş Yap') : t('Kayıt Ol'))}
             </button>
@@ -222,6 +262,74 @@ export default function LoginPage() {
           </button>
         </div>
       </main>
+
+      {/* Verification Modal (Popup) */}
+      {showModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(15, 23, 42, 0.65)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: '1.5rem'
+        }}>
+          <div style={{
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border)',
+            borderRadius: '24px',
+            padding: '2.5rem 2rem',
+            maxWidth: '460px',
+            width: '100%',
+            textAlign: 'center',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+            animation: 'scaleIn 0.3s ease-out'
+          }}>
+            <img 
+              src="/assets/favicon.jpg" 
+              alt="satiliktekne.com" 
+              style={{ width: '80px', height: '80px', borderRadius: '18px', objectFit: 'cover', marginBottom: '1.5rem', border: '1px solid var(--border)', boxShadow: '0 4px 10px rgba(0,0,0,0.05)' }} 
+            />
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.75rem' }}>
+              Aramıza Hoş Geldiniz! ⛵
+            </h2>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--color-primary)', marginBottom: '1rem' }}>
+              E-posta Doğrulaması Gerekli
+            </h3>
+            <p style={{ fontSize: '0.925rem', color: 'var(--text-secondary)', lineHeight: '1.6', marginBottom: '2rem' }}>
+              Kayıt işleminiz başarıyla tamamlandı. SatılıkTekne.com'un ayrıcalıklı dünyasına katılmak ve hemen ilan vermeye başlamak için <strong>yachting@cmx.com.tr</strong> adresinden gönderdiğimiz onay e-postasındaki doğrulama butonuna tıklamanız gerekmektedir.
+              <br /><br />
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                ℹ️ Eğer e-posta gelen kutunuzda görünmüyorsa lütfen <strong>Spam (Gereksiz)</strong> klasörünü kontrol etmeyi unutmayın.
+              </span>
+            </p>
+            
+            <button 
+              onClick={() => { setShowModal(false); setActiveTab('login'); }}
+              style={{
+                width: '100%',
+                padding: '14px',
+                background: 'var(--color-primary)',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '12px',
+                fontSize: '0.95rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                boxShadow: '0 4px 12px rgba(0, 102, 255, 0.2)'
+              }}
+            >
+              Anladım, E-postamı Kontrol Edeceğim
+            </button>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </>
