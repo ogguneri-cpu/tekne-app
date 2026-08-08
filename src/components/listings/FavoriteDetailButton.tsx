@@ -86,7 +86,7 @@ export default function FavoriteDetailButton({ listingId, initialIsFavorited }: 
           boxShadow: isFavorited ? '0 2px 8px rgba(0, 102, 255, 0.08)' : 'none'
         }}
       >
-        👍 {isFavorited ? (locale === 'en' ? 'Favorited' : 'Favorilerimde') : (locale === 'en' ? 'Add to Favorites' : 'Favorilere Ekle')}
+        ⭐ {isFavorited ? (locale === 'en' ? 'Favorited' : 'Favorilerimde') : (locale === 'en' ? 'Add to Favorites' : 'Favorilere Ekle')}
       </button>
 
       {/* Price Drop Notification Preference Modal */}
@@ -167,7 +167,7 @@ export default function FavoriteDetailButton({ listingId, initialIsFavorited }: 
                   gap: '8px'
                 }}
               >
-                👍 {locale === 'en' ? 'Only Add to Favorites' : 'Sadece Favorilere Ekle'}
+                ⭐ {locale === 'en' ? 'Only Add to Favorites' : 'Sadece Favorilere Ekle'}
               </button>
               <button
                 onClick={() => {

@@ -708,7 +708,7 @@ export default function HomePage() {
                   gap: '8px'
                 }}
               >
-                👍 {locale === 'en' ? 'Only Add to Favorites' : 'Sadece Favorilere Ekle'}
+                ⭐ {locale === 'en' ? 'Only Add to Favorites' : 'Sadece Favorilere Ekle'}
               </button>
               <button
                 onClick={() => {

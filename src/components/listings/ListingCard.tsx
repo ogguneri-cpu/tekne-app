@@ -85,7 +85,7 @@ export default function ListingCard({ listing, isFavorited, onToggleFavorite }: 
             alt={displayTitle} 
             loading="lazy" 
           />
-          {/* Favorite button (Thumbs up 👍) */}
+          {/* Favorite button (Star ⭐) */}
           <button
             type="button"
             onClick={(e) => {
@@ -103,11 +103,10 @@ export default function ListingCard({ listing, isFavorited, onToggleFavorite }: 
               width: '36px',
               height: '36px',
               borderRadius: '50%',
-              background: isFavorited ? 'var(--color-primary)' : 'rgba(15, 23, 42, 0.6)',
+              background: 'rgba(15, 23, 42, 0.5)',
               backdropFilter: 'blur(4px)',
-              border: isFavorited ? '2px solid #fff' : '1px solid rgba(255, 255, 255, 0.3)',
-              color: '#fff',
-              fontSize: '1.1rem',
+              border: 'none',
+              fontSize: '1.25rem',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -117,7 +116,9 @@ export default function ListingCard({ listing, isFavorited, onToggleFavorite }: 
               boxShadow: '0 4px 6px rgba(0, 0, 0, 0.15)'
             }}
           >
-            👍
+            <span style={{ filter: isFavorited ? 'none' : 'grayscale(100%)', opacity: isFavorited ? 1 : 0.5, transition: 'all 0.2s' }}>
+              ⭐
+            </span>
           </button>
           <span className="card-category-badge">
             {categoryInfo.icon} {t(categoryInfo.label)}

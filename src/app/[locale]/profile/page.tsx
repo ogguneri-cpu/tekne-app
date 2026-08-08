@@ -291,7 +291,7 @@ export default function ProfileDashboardPage() {
                     transition: 'all 0.2s'
                   }}
                 >
-                  <span>👍</span> {t('Favorilerim')}
+                  <span>⭐</span> {t('Favorilerim')}
                 </button>
                 <button
                   onClick={() => setActiveTab('settings')}
