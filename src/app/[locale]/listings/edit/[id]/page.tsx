@@ -76,6 +76,7 @@ export default function EditListingPage({ params }: EditListingPageProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [brand, setBrand] = useState('');
+  const [customBrand, setCustomBrand] = useState('');
   const [model, setModel] = useState('');
   const [year, setYear] = useState('');
   const [length, setLength] = useState('');
@@ -151,7 +152,15 @@ export default function EditListingPage({ params }: EditListingPageProps) {
       setCategory(listing.category || '');
       setTitle(listing.title || '');
       setDescription(listing.description || '');
-      setBrand(listing.brand || '');
+      const listingBrand = listing.brand || '';
+      const isPopular = POPULAR_BRANDS.includes(listingBrand);
+      if (listingBrand && !isPopular) {
+        setBrand('Diğer');
+        setCustomBrand(listingBrand);
+      } else {
+        setBrand(listingBrand);
+        setCustomBrand('');
+      }
       setModel(listing.model || '');
       setYear(listing.year ? String(listing.year) : '');
       setLength(listing.length_m ? String(listing.length_m) : '');
@@ -273,7 +282,7 @@ export default function EditListingPage({ params }: EditListingPageProps) {
         title,
         description,
         category,
-        brand,
+        brand: brand === 'Diğer' ? customBrand : brand,
         model: model || null,
         type,
         sale_price: type === 'sale' ? numericPrice : null,
@@ -455,17 +464,35 @@ export default function EditListingPage({ params }: EditListingPageProps) {
 
                 <div className="form-group" style={{ flex: '1 1 200px' }}>
                   <label htmlFor="edit-brand" style={{ display: 'block', marginBottom: '6px', fontWeight: 600, fontSize: '0.95rem' }}>Marka</label>
-                  <select
-                    id="edit-brand"
-                    value={brand}
-                    onChange={(e) => setBrand(e.target.value)}
-                    style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)', outline: 'none' }}
-                  >
-                    <option value="">Seçin</option>
-                    {POPULAR_BRANDS.map(b => (
-                      <option key={b} value={b}>{b}</option>
-                    ))}
-                  </select>
+                  <div style={{ display: 'flex', gap: '0.5rem', flexDirection: 'column' }}>
+                    <select
+                      id="edit-brand"
+                      value={brand}
+                      onChange={(e) => {
+                        setBrand(e.target.value);
+                        if (e.target.value !== 'Diğer') {
+                          setCustomBrand('');
+                        }
+                      }}
+                      style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)', outline: 'none' }}
+                    >
+                      <option value="">Seçin</option>
+                      {POPULAR_BRANDS.map(b => (
+                        <option key={b} value={b}>{b}</option>
+                      ))}
+                      <option value="Diğer">Diğer</option>
+                    </select>
+                    {brand === 'Diğer' && (
+                      <input
+                        type="text"
+                        placeholder="Tekne markasını yazınız"
+                        value={customBrand}
+                        onChange={(e) => setCustomBrand(e.target.value)}
+                        required
+                        style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)', outline: 'none', boxSizing: 'border-box' }}
+                      />
+                    )}
+                  </div>
                 </div>
               </div>
 

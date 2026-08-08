@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { useRouter } from '@/i18n/routing';
 import { createClient } from '@/lib/supabase/client';
 import Navbar from '@/components/layout/Navbar';
@@ -129,6 +129,7 @@ const compressImage = (file: File): Promise<Blob> => {
 
 export default function CreateListingPage() {
   const t = useTranslations();
+  const locale = useLocale();
   const router = useRouter();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -148,6 +149,7 @@ export default function CreateListingPage() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [brand, setBrand] = useState('');
+  const [customBrand, setCustomBrand] = useState('');
   const [model, setModel] = useState('');
   const [year, setYear] = useState('');
   const [length, setLength] = useState('');
@@ -356,7 +358,7 @@ export default function CreateListingPage() {
         slug,
         description,
         category,
-        brand,
+        brand: brand === 'Diğer' ? customBrand : brand,
         model: model || null,
         type,
         sale_price: type === 'sale' && price ? Number(price.replace(/\./g, '')) : null,
@@ -564,17 +566,36 @@ export default function CreateListingPage() {
 
                     <div className="form-group">
                       <label htmlFor="create-brand">{t('Marka')}</label>
-                      <select 
-                        id="create-brand"
-                        value={brand}
-                        onChange={(e) => setBrand(e.target.value)}
-                        style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)' }}
-                      >
-                        <option value="">{t('Marka seçin')}</option>
-                        {POPULAR_BRANDS.map(b => (
-                          <option key={b} value={b}>{b}</option>
-                        ))}
-                      </select>
+                      <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                        <select 
+                          id="create-brand"
+                          value={brand}
+                          onChange={(e) => {
+                            setBrand(e.target.value);
+                            if (e.target.value !== 'Diğer') {
+                              setCustomBrand('');
+                            }
+                          }}
+                          style={{ flex: '1 1 200px', width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)' }}
+                        >
+                          <option value="">{t('Marka seçin')}</option>
+                          {POPULAR_BRANDS.map(b => (
+                            <option key={b} value={b}>{b}</option>
+                          ))}
+                          <option value="Diğer">{locale === 'en' ? 'Other' : 'Diğer'}</option>
+                        </select>
+                        
+                        {brand === 'Diğer' && (
+                          <input 
+                            type="text"
+                            placeholder={locale === 'en' ? 'Enter boat brand' : 'Tekne markasını yazınız'}
+                            value={customBrand}
+                            onChange={(e) => setCustomBrand(e.target.value)}
+                            required
+                            style={{ flex: '1 1 200px', width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)', boxSizing: 'border-box' }}
+                          />
+                        )}
+                      </div>
                     </div>
 
                     <div className="form-row" style={{ display: 'flex', gap: '1rem' }}>
