@@ -45,6 +45,21 @@ export default function HomePage() {
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
   const [blogs, setBlogs] = useState<any[]>([]);
 
+  // 0. Parse URL Query Parameters on Load (e.g. from Blog CTA links)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const typeParam = params.get('type');
+      const catParam = params.get('category');
+      if (typeParam === 'sale' || typeParam === 'rent') {
+        setActiveType(typeParam);
+      }
+      if (catParam) {
+        setActiveCategory(catParam);
+      }
+    }
+  }, []);
+
   // 1. Fetch Listings from Database on Mount
   useEffect(() => {
     const fetchListings = async () => {

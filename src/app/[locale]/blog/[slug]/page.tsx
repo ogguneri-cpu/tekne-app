@@ -77,7 +77,7 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
 
       <main className="min-h-screen bg-bg-body py-12">
         <div className="container max-w-3xl" style={{ maxWidth: '768px', margin: '0 auto', padding: '0 1.5rem' }}>
-          <article className="blog-detail bg-bg-card border border-border rounded-2xl p-8 shadow-sm">
+          <article className="blog-detail" style={{ background: 'transparent', border: 'none', boxShadow: 'none', padding: '1rem 0' }}>
             <Link href="/" className="detail-back-btn inline-flex items-center gap-2 mb-6 text-sm font-bold text-primary" style={{ color: 'var(--color-primary)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
               ← {t('Ana Sayfa')}
             </Link>
@@ -112,6 +112,120 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
               style={{ color: 'var(--text-secondary)', fontSize: '0.925rem', lineHeight: '1.6' }}
               dangerouslySetInnerHTML={{ __html: cleanBody }}
             />
+
+            {/* Call to Action (CTA) Section */}
+            <div className="blog-cta-section" style={{
+              marginTop: '4rem',
+              padding: '2.5rem',
+              background: 'linear-gradient(135deg, rgba(0, 102, 255, 0.05) 0%, rgba(0, 68, 204, 0.02) 100%)',
+              border: '1px solid rgba(0, 102, 255, 0.1)',
+              borderRadius: '20px',
+              textAlign: 'center'
+            }}>
+              <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.75rem' }}>
+                🚢 Mavi Yolculuğa İlk Adımı Atın!
+              </h3>
+              <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', marginBottom: '2rem', lineHeight: '1.6', maxWidth: '600px', margin: '0 auto 2rem' }}>
+                Türkiye'nin en seçkin ilanları arasından hayalinizdeki <strong>satılık tekne</strong>, lüks <strong>satılık motoryat</strong> veya rüzgarın gücünü hissettirecek <strong>satılık yelkenli</strong> modelini keşfedin. Unutulmaz bir tatil için <strong>kiralık tekne</strong> ilanlarımıza göz atın ve muhteşem bir <strong>mavi tur</strong> planlayın!
+              </p>
+              
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+                gap: '12px',
+                marginTop: '1.5rem'
+              }}>
+                <Link href="/?type=sale" style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '14px 20px',
+                  background: 'var(--color-primary)',
+                  color: '#fff',
+                  borderRadius: '12px',
+                  fontWeight: 700,
+                  fontSize: '0.875rem',
+                  textDecoration: 'none',
+                  boxShadow: '0 4px 12px rgba(0, 102, 255, 0.15)'
+                }}
+                className="cta-hover-btn"
+                >
+                  ⛵ Satılık Tekne
+                </Link>
+                
+                <Link href="/?type=sale&category=motoryat" style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '14px 20px',
+                  background: 'var(--bg-card)',
+                  color: 'var(--text-primary)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '12px',
+                  fontWeight: 700,
+                  fontSize: '0.875rem',
+                  textDecoration: 'none'
+                }}
+                className="cta-hover-btn"
+                >
+                  Motoryat İlanları
+                </Link>
+
+                <Link href="/?type=sale&category=yelkenli" style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '14px 20px',
+                  background: 'var(--bg-card)',
+                  color: 'var(--text-primary)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '12px',
+                  fontWeight: 700,
+                  fontSize: '0.875rem',
+                  textDecoration: 'none'
+                }}
+                className="cta-hover-btn"
+                >
+                  Yelkenli İlanları
+                </Link>
+
+                <Link href="/?type=rent" style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '14px 20px',
+                  background: 'var(--bg-card)',
+                  color: 'var(--text-primary)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '12px',
+                  fontWeight: 700,
+                  fontSize: '0.875rem',
+                  textDecoration: 'none'
+                }}
+                className="cta-hover-btn"
+                >
+                  Kiralık Tekne
+                </Link>
+
+                <Link href="/?type=rent&category=gulet" style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '14px 20px',
+                  background: 'var(--bg-card)',
+                  color: 'var(--text-primary)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '12px',
+                  fontWeight: 700,
+                  fontSize: '0.875rem',
+                  textDecoration: 'none'
+                }}
+                className="cta-hover-btn"
+                >
+                  Mavi Tur & Gulet
+                </Link>
+              </div>
+            </div>
           </article>
         </div>
       </main>
