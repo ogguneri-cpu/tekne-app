@@ -130,41 +130,44 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
               </p>
               
               <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+                display: 'flex',
+                flexWrap: 'wrap',
+                justifyContent: 'center',
                 gap: '12px',
                 marginTop: '1.5rem'
               }}>
                 <Link href="/?type=sale" style={{
-                  display: 'flex',
+                  display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  padding: '14px 20px',
+                  padding: '12px 24px',
                   background: 'var(--color-primary)',
                   color: '#fff',
                   borderRadius: '12px',
                   fontWeight: 700,
                   fontSize: '0.875rem',
                   textDecoration: 'none',
-                  boxShadow: '0 4px 12px rgba(0, 102, 255, 0.15)'
+                  boxShadow: '0 4px 12px rgba(0, 102, 255, 0.15)',
+                  whiteSpace: 'nowrap'
                 }}
                 className="cta-hover-btn"
                 >
-                  ⛵ Satılık Tekne
+                  Satılık Tekne
                 </Link>
                 
                 <Link href="/?type=sale&category=motoryat" style={{
-                  display: 'flex',
+                  display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  padding: '14px 20px',
-                  background: 'var(--bg-card)',
-                  color: 'var(--text-primary)',
-                  border: '1px solid var(--border)',
+                  padding: '12px 24px',
+                  background: 'var(--color-primary)',
+                  color: '#fff',
                   borderRadius: '12px',
                   fontWeight: 700,
                   fontSize: '0.875rem',
-                  textDecoration: 'none'
+                  textDecoration: 'none',
+                  boxShadow: '0 4px 12px rgba(0, 102, 255, 0.15)',
+                  whiteSpace: 'nowrap'
                 }}
                 className="cta-hover-btn"
                 >
@@ -172,17 +175,18 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
                 </Link>
 
                 <Link href="/?type=sale&category=yelkenli" style={{
-                  display: 'flex',
+                  display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  padding: '14px 20px',
-                  background: 'var(--bg-card)',
-                  color: 'var(--text-primary)',
-                  border: '1px solid var(--border)',
+                  padding: '12px 24px',
+                  background: 'var(--color-primary)',
+                  color: '#fff',
                   borderRadius: '12px',
                   fontWeight: 700,
                   fontSize: '0.875rem',
-                  textDecoration: 'none'
+                  textDecoration: 'none',
+                  boxShadow: '0 4px 12px rgba(0, 102, 255, 0.15)',
+                  whiteSpace: 'nowrap'
                 }}
                 className="cta-hover-btn"
                 >
@@ -190,17 +194,18 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
                 </Link>
 
                 <Link href="/?type=rent" style={{
-                  display: 'flex',
+                  display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  padding: '14px 20px',
-                  background: 'var(--bg-card)',
-                  color: 'var(--text-primary)',
-                  border: '1px solid var(--border)',
+                  padding: '12px 24px',
+                  background: 'var(--color-primary)',
+                  color: '#fff',
                   borderRadius: '12px',
                   fontWeight: 700,
                   fontSize: '0.875rem',
-                  textDecoration: 'none'
+                  textDecoration: 'none',
+                  boxShadow: '0 4px 12px rgba(0, 102, 255, 0.15)',
+                  whiteSpace: 'nowrap'
                 }}
                 className="cta-hover-btn"
                 >
@@ -208,17 +213,18 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
                 </Link>
 
                 <Link href="/?type=rent&category=gulet" style={{
-                  display: 'flex',
+                  display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  padding: '14px 20px',
-                  background: 'var(--bg-card)',
-                  color: 'var(--text-primary)',
-                  border: '1px solid var(--border)',
+                  padding: '12px 24px',
+                  background: 'var(--color-primary)',
+                  color: '#fff',
                   borderRadius: '12px',
                   fontWeight: 700,
                   fontSize: '0.875rem',
-                  textDecoration: 'none'
+                  textDecoration: 'none',
+                  boxShadow: '0 4px 12px rgba(0, 102, 255, 0.15)',
+                  whiteSpace: 'nowrap'
                 }}
                 className="cta-hover-btn"
                 >
