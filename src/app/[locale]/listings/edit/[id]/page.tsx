@@ -64,6 +64,25 @@ export default function EditListingPage({ params }: EditListingPageProps) {
   const router = useRouter();
   const supabase = createClient();
 
+  const buttonStyle = (isSelected: boolean) => ({
+    width: '100%',
+    padding: '12px 16px',
+    borderRadius: '12px',
+    border: isSelected ? '2px solid var(--color-primary)' : '1px solid var(--border)',
+    background: isSelected ? 'rgba(0, 102, 255, 0.06)' : 'var(--bg-body)',
+    color: isSelected ? 'var(--color-primary)' : 'var(--text-primary)',
+    fontWeight: 600,
+    cursor: 'pointer',
+    textAlign: 'center' as const,
+    transition: 'all 0.2s ease',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    boxShadow: isSelected ? '0 2px 8px rgba(0, 102, 255, 0.08)' : 'none',
+    fontFamily: 'inherit'
+  });
+
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [saveLoading, setSaveLoading] = useState(false);
@@ -648,16 +667,79 @@ export default function EditListingPage({ params }: EditListingPageProps) {
                 </div>
               </div>
 
-              {/* Condition & Swap */}
-              <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', margin: '0.5rem 0' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.95rem', color: 'var(--text-primary)' }}>
-                  <input
-                    type="checkbox"
-                    checked={isSwap}
-                    onChange={(e) => setIsSwap(e.target.checked)}
-                  />
-                  Takas Yapılır
-                </label>
+              {/* Condition, Seller Type & Swap */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginTop: '1.5rem', marginBottom: '1.5rem' }}>
+                
+                {/* Column 1: Kimden */}
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, fontSize: '0.95rem' }}>Kimden</label>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setSellerType('owner')}
+                      style={buttonStyle(sellerType === 'owner')}
+                    >
+                      👤 Sahibinden
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSellerType('dealer')}
+                      style={buttonStyle(sellerType === 'dealer')}
+                    >
+                      🏬 Mağazadan
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSellerType('company')}
+                      style={buttonStyle(sellerType === 'company')}
+                    >
+                      🏢 Firmadan
+                    </button>
+                  </div>
+                </div>
+
+                {/* Column 2: Durumu */}
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, fontSize: '0.95rem' }}>Durumu</label>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setCondition('new')}
+                      style={buttonStyle(condition === 'new')}
+                    >
+                      ✨ Sıfır
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCondition('used')}
+                      style={buttonStyle(condition === 'used')}
+                    >
+                      🔄 İkinci El
+                    </button>
+                  </div>
+                </div>
+
+                {/* Column 3: Takas */}
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, fontSize: '0.95rem' }}>Takas</label>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setIsSwap(true)}
+                      style={buttonStyle(isSwap === true)}
+                    >
+                      🤝 Takas Yapılır
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsSwap(false)}
+                      style={buttonStyle(isSwap === false)}
+                    >
+                      ❌ Takas Yapılmaz
+                    </button>
+                  </div>
+                </div>
+
               </div>
 
               {/* Images Section */}

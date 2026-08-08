@@ -138,6 +138,25 @@ export default function CreateListingPage() {
   };
   const supabase = createClient();
 
+  const buttonStyle = (isSelected: boolean) => ({
+    width: '100%',
+    padding: '12px 16px',
+    borderRadius: '12px',
+    border: isSelected ? '2px solid var(--color-primary)' : '1px solid var(--border)',
+    background: isSelected ? 'rgba(0, 102, 255, 0.06)' : 'var(--bg-body)',
+    color: isSelected ? 'var(--color-primary)' : 'var(--text-primary)',
+    fontWeight: 600,
+    cursor: 'pointer',
+    textAlign: 'center' as const,
+    transition: 'all 0.2s ease',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    boxShadow: isSelected ? '0 2px 8px rgba(0, 102, 255, 0.08)' : 'none',
+    fontFamily: 'inherit'
+  });
+
   const [user, setUser] = useState<User | null>(null);
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -774,78 +793,78 @@ export default function CreateListingPage() {
                       </div>
                     </div>
 
-                    <div className="form-group">
-                      <label>{t('Kimden')}</label>
-                      <div className="radio-group">
-                        <label className="radio-option">
-                          <input 
-                            type="radio" 
-                            name="create-seller" 
-                            value="sahibinden" 
-                            checked={sellerType === 'sahibinden'}
-                            onChange={() => setSellerType('sahibinden')}
-                          />
-                          <span>{t('Sahibinden')}</span>
-                        </label>
-                        <label className="radio-option">
-                          <input 
-                            type="radio" 
-                            name="create-seller" 
-                            value="magazadan" 
-                            checked={sellerType === 'magazadan'}
-                            onChange={() => setSellerType('magazadan')}
-                          />
-                          <span>{t('Mağazadan')}</span>
-                        </label>
-                        <label className="radio-option">
-                          <input 
-                            type="radio" 
-                            name="create-seller" 
-                            value="firmadan" 
-                            checked={sellerType === 'firmadan'}
-                            onChange={() => setSellerType('firmadan')}
-                          />
-                          <span>{t('Firmadan')}</span>
-                        </label>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginTop: '1.5rem', marginBottom: '1.5rem' }}>
+                      
+                      {/* Column 1: Kimden */}
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, fontSize: '0.95rem' }}>{t('Kimden')}</label>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <button
+                            type="button"
+                            onClick={() => setSellerType('sahibinden')}
+                            style={buttonStyle(sellerType === 'sahibinden')}
+                          >
+                            👤 {t('Sahibinden')}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setSellerType('magazadan')}
+                            style={buttonStyle(sellerType === 'magazadan')}
+                          >
+                            🏬 {t('Mağazadan')}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setSellerType('firmadan')}
+                            style={buttonStyle(sellerType === 'firmadan')}
+                          >
+                            🏢 {t('Firmadan')}
+                          </button>
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="form-group">
-                      <label>{t('Durumu')}</label>
-                      <div className="radio-group">
-                        <label className="radio-option">
-                          <input 
-                            type="radio" 
-                            name="create-condition" 
-                            value="sifir" 
-                            checked={condition === 'sifir'}
-                            onChange={() => setCondition('sifir')}
-                          />
-                          <span>{t('Sıfır')}</span>
-                        </label>
-                        <label className="radio-option">
-                          <input 
-                            type="radio" 
-                            name="create-condition" 
-                            value="ikinci_el" 
-                            checked={condition === 'ikinci_el'}
-                            onChange={() => setCondition('ikinci_el')}
-                          />
-                          <span>{t('İkinci El')}</span>
-                        </label>
+                      {/* Column 2: Durumu */}
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, fontSize: '0.95rem' }}>{t('Durumu')}</label>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <button
+                            type="button"
+                            onClick={() => setCondition('sifir')}
+                            style={buttonStyle(condition === 'sifir')}
+                          >
+                            ✨ {t('Sıfır')}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setCondition('ikinci_el')}
+                            style={buttonStyle(condition === 'ikinci_el')}
+                          >
+                            🔄 {t('İkinci El')}
+                          </button>
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="form-group">
-                      <label className="checkbox-option">
-                        <input 
-                          type="checkbox" 
-                          id="create-swap" 
-                          checked={isSwap}
-                          onChange={(e) => setIsSwap(e.target.checked)}
-                        />
-                        <span>{t('Takas yapılır')}</span>
-                      </label>
+                      {/* Column 3: Takas */}
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, fontSize: '0.95rem' }}>{t('Takas')}</label>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <button
+                            type="button"
+                            onClick={() => setIsSwap(true)}
+                            style={buttonStyle(isSwap === true)}
+                          >
+                            🤝 {t('Takas Yapılır')}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setIsSwap(false)}
+                            style={buttonStyle(isSwap === false)}
+                          >
+                            ❌ {t('Takas Yapılmaz')}
+                          </button>
+                        </div>
+                      </div>
+
                     </div>
                   </div>
                 </>
