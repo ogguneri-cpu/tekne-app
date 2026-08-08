@@ -9,7 +9,6 @@ import { DEMO_DATA } from '@/lib/utils/constants';
 import { formatPrice } from '@/lib/utils/format';
 import DetailGallery from './DetailGallery';
 import BookingForm from './BookingForm';
-import DOMPurify from 'isomorphic-dompurify';
 
 interface ListingDetailPageProps {
   params: Promise<{ locale: string; slug: string }>;
@@ -151,7 +150,7 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
 
     const priceLabel = listing.type === 'sale' ? t('Satış Fiyatı') : t('/ gün kiralama');
 
-    const cleanDescription = DOMPurify.sanitize(displayDesc || t('Açıklama eklenmemiş'));
+    const cleanDescription = displayDesc || t('Açıklama eklenmemiş');
 
     return (
       <>

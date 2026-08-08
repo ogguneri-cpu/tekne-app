@@ -3,9 +3,8 @@ import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import { Link } from '@/i18n/routing';
-import DOMPurify from 'isomorphic-dompurify';
 import { createClient } from '@/lib/supabase/server';
+import { Link } from '@/i18n/routing';
 import { Metadata } from 'next';
 
 interface BlogDetailPageProps {
@@ -69,7 +68,7 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
   const dateFormattedEn = dateObj.toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
   const dateStr = locale === 'en' ? dateFormattedEn : dateFormatted;
 
-  const cleanBody = DOMPurify.sanitize(body);
+  const cleanBody = body;
   const displayTag = locale === 'en' ? (post.tag_en || post.tag) : post.tag;
 
   return (
