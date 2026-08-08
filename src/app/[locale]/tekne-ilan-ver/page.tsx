@@ -1194,26 +1194,48 @@ export default function CreateListingPage() {
             <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: '1.6', marginBottom: '2rem' }}>
               Tekne ilanınız başarıyla kaydedilmiştir. Yöneticilerimiz tarafından onaylandıktan sonra yayına alınacaktır.
             </p>
-            <button
-              onClick={() => {
-                setShowSuccessModal(false);
-                router.push('/');
-              }}
-              style={{
-                width: '100%',
-                padding: '12px',
-                background: 'var(--color-primary)',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '8px',
-                fontWeight: 600,
-                fontSize: '1rem',
-                cursor: 'pointer',
-                transition: 'opacity 0.2s'
-              }}
-            >
-              Ana Sayfaya Git
-            </button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <button
+                onClick={() => {
+                  setShowSuccessModal(false);
+                  router.push('/profile');
+                }}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  background: 'var(--color-primary)',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontWeight: 600,
+                  fontSize: '1rem',
+                  cursor: 'pointer',
+                  transition: 'opacity 0.2s'
+                }}
+              >
+                {locale === 'en' ? 'Go to My Listings' : 'İlanlarıma Git'}
+              </button>
+              <button
+                onClick={() => {
+                  setShowSuccessModal(false);
+                  router.push('/');
+                }}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  background: 'transparent',
+                  color: 'var(--text-primary)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '8px',
+                  fontWeight: 600,
+                  fontSize: '1rem',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.2s'
+                }}
+              >
+                {locale === 'en' ? 'Go to Homepage' : 'Ana Sayfaya Git'}
+              </button>
+            </div>
           </div>
         </div>
       )}
