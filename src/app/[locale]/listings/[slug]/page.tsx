@@ -180,7 +180,7 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
               {/* Price card */}
               <div className="sahib-price-card">
                 <div className="sahib-price-label">{priceLabel}</div>
-                <div className="sahib-price-val">{priceText}</div>
+                <div className="sahib-price" style={{ color: 'var(--color-primary)' }}>{priceText}</div>
               </div>
 
               {/* Booking section for rental */}
@@ -264,7 +264,7 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
                 <div className="sahib-qs-item">
                   <span className="sahib-qs-label">{t('İlan Tarihi')}</span>
                   <span className="sahib-qs-value">
-                    {listing.created_at ? new Date(listing.created_at).toLocaleDateString(locale === 'en' ? 'en-US' : 'tr-TR') : ''}
+                    {new Date(listing.created_at || new Date()).toLocaleDateString(locale === 'en' ? 'en-US' : 'tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}
                   </span>
                 </div>
                 <div className="sahib-qs-item">
