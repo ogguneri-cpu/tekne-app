@@ -141,7 +141,7 @@ export default function Navbar() {
                   className="user-menu-item"
                   onClick={() => setDropdownOpen(false)}
                 >
-                  <span>👌</span>
+                  <span>👍</span>
                   <span>{t('Favori İlanlarım')}</span>
                 </Link>
                 <Link 
