@@ -50,6 +50,7 @@ export default function HomePage() {
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
   const [showNotifyModal, setShowNotifyModal] = useState(false);
   const [pendingFavoriteListingId, setPendingFavoriteListingId] = useState<string | null>(null);
+  const [filterUserId, setFilterUserId] = useState<string | null>(null);
 
   // 0. Parse URL Query Parameters on Load (e.g. from Blog CTA links)
   useEffect(() => {
@@ -57,11 +58,15 @@ export default function HomePage() {
       const params = new URLSearchParams(window.location.search);
       const typeParam = params.get('type');
       const catParam = params.get('category');
+      const userParam = params.get('userId');
       if (typeParam === 'sale' || typeParam === 'rent') {
         setActiveType(typeParam);
       }
       if (catParam) {
         setActiveCategory(catParam);
+      }
+      if (userParam) {
+        setFilterUserId(userParam);
       }
     }
   }, []);
@@ -233,6 +238,11 @@ export default function HomePage() {
     startTransition(() => {
       let result = [...rawListings];
 
+      // User/Store filter
+      if (filterUserId) {
+        result = result.filter(item => item.user_id === filterUserId);
+      }
+
       // Type filter (Satılık / Kiralık)
       result = result.filter(item => item.type === activeType);
 
@@ -326,13 +336,17 @@ export default function HomePage() {
 
       setFilteredListings(result);
     });
-  }, [rawListings, activeType, activeCategory, searchQuery, filters]);
+  }, [rawListings, activeType, activeCategory, searchQuery, filters, filterUserId]);
 
   const handleClearFilters = () => {
     setFilters(initialFilters);
     setActiveCategory('');
     setActiveType('sale');
     setSearchQuery('');
+    setFilterUserId(null);
+    if (typeof window !== 'undefined') {
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
   };
 
   return (
@@ -441,6 +455,41 @@ export default function HomePage() {
                 <span>{t('Filtreler')}</span>
               </button>
             </div>
+
+            {filterUserId && (
+              <div style={{ 
+                background: 'rgba(0, 102, 255, 0.05)', 
+                border: '1px solid rgba(0, 102, 255, 0.15)', 
+                borderRadius: '12px', 
+                padding: '12px 16px', 
+                marginBottom: '1.25rem', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '8px'
+              }}>
+                <span style={{ fontSize: '0.9rem', color: 'var(--color-primary)', fontWeight: 600 }}>
+                  🏬 {locale === 'en' ? 'Showing listings from a specific dealer.' : 'Bir mağazaya ait ilanları görüntülüyorsunuz.'}
+                </span>
+                <button 
+                  onClick={handleClearFilters}
+                  style={{
+                    background: 'var(--color-primary)',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '6px 12px',
+                    fontSize: '0.8rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    transition: 'opacity 0.2s'
+                  }}
+                >
+                  {locale === 'en' ? 'Show All Listings' : 'Tüm İlanları Göster'}
+                </button>
+              </div>
+            )}
 
             <ListingGrid 
               listings={filteredListings} 

@@ -74,15 +74,22 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
       }
 
       if (data) {
-        let profile = { full_name: '', phone: '' };
+        let profile = { full_name: '', phone: '', role: 'user', company_name: '', company_logo: '', website: '' };
         try {
           const { data: profileData } = await supabase
             .from('profiles')
-            .select('full_name, phone')
+            .select('full_name, phone, role, company_name, company_logo, website')
             .eq('id', data.user_id)
             .maybeSingle();
           if (profileData) {
-            profile = profileData;
+            profile = {
+              full_name: profileData.full_name || '',
+              phone: profileData.phone || '',
+              role: profileData.role || 'user',
+              company_name: profileData.company_name || '',
+              company_logo: profileData.company_logo || '',
+              website: profileData.website || ''
+            };
           }
         } catch (profileErr) {
           console.warn('Profile fetch error:', profileErr);
@@ -124,7 +131,11 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
           images: data.images || [],
           user_name: data.user_name || profile.full_name || 'Kullanıcı',
           user_phone: data.user_phone || profile.phone || '',
-          user_email: data.user_email || ''
+          user_email: data.user_email || '',
+          seller_role: profile.role,
+          company_name: profile.company_name,
+          company_logo: profile.company_logo,
+          seller_website: profile.website
         };
       }
     } catch (e) {
@@ -209,17 +220,44 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
 
               {/* Contact & Seller info */}
               <div className="sahib-contact-card" style={{ marginTop: '1rem', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1.25rem' }}>
-                <div className="sahib-seller-card" style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '1rem' }}>
-                  <div className="sahib-seller-logo" style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(0, 102, 255, 0.1)', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '1.2rem' }}>
-                    👤
+                {((listing.seller_type === 'dealer' || listing.seller_type === 'company') && listing.company_name) ? (
+                  <div className="sahib-seller-card" style={{ display: 'flex', gap: '14px', alignItems: 'center', marginBottom: '1.25rem' }}>
+                    {listing.company_logo ? (
+                      <img 
+                        src={listing.company_logo} 
+                        alt={listing.company_name} 
+                        style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--border)' }} 
+                      />
+                    ) : (
+                      <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(0, 102, 255, 0.1)', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '1.4rem', border: '1px solid rgba(0, 102, 255, 0.2)' }}>
+                        🏬
+                      </div>
+                    )}
+                    <div className="sahib-seller-info" style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                      <span className="sahib-seller-name" style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '1.05rem', lineHeight: '1.3' }}>
+                        {listing.company_name}
+                      </span>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                        {t('Yetkili')}: {userName}
+                      </span>
+                      <span className="sahib-seller-loc" style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                        {[listing.location_ilce, listing.location_il].filter(Boolean).join(', ') || t('Belirtilmemiş')}
+                      </span>
+                    </div>
                   </div>
-                  <div className="sahib-seller-info" style={{ display: 'flex', flexDirection: 'column' }}>
-                    <span className="sahib-seller-name" style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{userName}</span>
-                    <span className="sahib-seller-loc" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                      {[listing.location_ilce, listing.location_il].filter(Boolean).join(', ') || t('Belirtilmemiş')}
-                    </span>
+                ) : (
+                  <div className="sahib-seller-card" style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '1rem' }}>
+                    <div className="sahib-seller-logo" style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(0, 102, 255, 0.1)', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '1.2rem' }}>
+                      👤
+                    </div>
+                    <div className="sahib-seller-info" style={{ display: 'flex', flexDirection: 'column' }}>
+                      <span className="sahib-seller-name" style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{userName}</span>
+                      <span className="sahib-seller-loc" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                        {[listing.location_ilce, listing.location_il].filter(Boolean).join(', ') || t('Belirtilmemiş')}
+                      </span>
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {listing.user_phone && (
                   <a 
@@ -269,6 +307,32 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
                   >
                     ✉️ {t('E-posta Gönder')}
                   </a>
+                )}
+
+                {(listing.seller_type === 'dealer' || listing.seller_type === 'company') && (
+                  <Link 
+                    href={`/?userId=${listing.user_id}`}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      width: '100%',
+                      padding: '12px',
+                      background: 'rgba(0, 102, 255, 0.05)',
+                      border: '1px solid var(--color-primary)',
+                      color: 'var(--color-primary)',
+                      borderRadius: '10px',
+                      textDecoration: 'none',
+                      fontWeight: 700,
+                      fontSize: '0.9rem',
+                      textAlign: 'center',
+                      marginTop: '10px',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    🏬 {t('Mağazanın Diğer İlanları')}
+                  </Link>
                 )}
               </div>
 

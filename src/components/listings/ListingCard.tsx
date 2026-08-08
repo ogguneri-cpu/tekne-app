@@ -120,9 +120,27 @@ export default function ListingCard({ listing, isFavorited, onToggleFavorite }: 
               ⭐
             </span>
           </button>
-          <span className="card-category-badge">
-            {categoryInfo.icon} {t(categoryInfo.label)}
-          </span>
+          <div className="card-badges">
+            <span className="badge badge-category">
+              {categoryInfo.icon} {t(categoryInfo.label)}
+            </span>
+            {listing.condition === 'sifir' && (
+              <span className="badge badge-condition">{t('Sıfır')}</span>
+            )}
+            {listing.is_swap && (
+              <span className="badge badge-swap">{t('Takas')}</span>
+            )}
+            {listing.seller_type === 'dealer' && (
+              <span className="badge badge-seller">
+                🏬 {t('Mağazadan')}
+              </span>
+            )}
+            {listing.seller_type === 'company' && (
+              <span className="badge badge-seller" style={{ background: 'rgba(71, 85, 105, 0.12)', color: '#475569', border: '1px solid rgba(71, 85, 105, 0.2)' }}>
+                🏢 {t('Firmadan')}
+              </span>
+            )}
+          </div>
           {listing.images && listing.images.length > 1 && (
             <span className="card-img-count">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -132,12 +150,6 @@ export default function ListingCard({ listing, isFavorited, onToggleFavorite }: 
               </svg>
               {listing.images.length}
             </span>
-          )}
-          {listing.condition === 'sifir' && (
-            <span className="badge badge-new">{t('Sıfır')}</span>
-          )}
-          {listing.is_swap && (
-            <span className="badge badge-swap">{t('Takas')}</span>
           )}
         </div>
         <div className="card-body">
