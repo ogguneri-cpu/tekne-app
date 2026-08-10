@@ -41,22 +41,28 @@ export default function BookingForm({ listingId, listingTitle, pricePerDay, curr
     });
   }, []);
 
-  const handleCalculate = () => {
-    if (!startDate || !endDate) return;
-
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const diffTime = end.getTime() - start.getTime();
-    
-    if (diffTime <= 0) {
-      alert(locale === 'en' ? 'Check-out date must be after check-in date.' : 'Çıkış tarihi giriş tarihinden sonra olmalıdır.');
-      return;
+  // Automatically calculate total days and price when dates change
+  useEffect(() => {
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const diffTime = end.getTime() - start.getTime();
+      
+      if (diffTime > 0) {
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        setDays(diffDays);
+        setTotal(diffDays * pricePerDay);
+      } else {
+        setDays(null);
+        setTotal(null);
+      }
+    } else {
+      setDays(null);
+      setTotal(null);
     }
+  }, [startDate, endDate, pricePerDay]);
 
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    setDays(diffDays);
-    setTotal(diffDays * pricePerDay);
-  };
+  const isInvalidDate = startDate && endDate && new Date(endDate).getTime() <= new Date(startDate).getTime();
 
   const handleOpenRequest = () => {
     if (days === null || total === null) return;
@@ -105,7 +111,7 @@ export default function BookingForm({ listingId, listingTitle, pricePerDay, curr
   return (
     <>
       <div className="sahib-booking bg-bg-card rounded-xl p-6 border border-border shadow-md">
-        <div className="sahib-booking-dates grid grid-cols-2 gap-4 mb-4">
+        <div className="sahib-booking-dates grid grid-cols-2 gap-4 mb-3">
           <div className="sahib-date-field">
             <label className="block text-xs font-bold text-text-secondary uppercase mb-1">{t('Giriş Tarihi')}</label>
             <input 
@@ -113,11 +119,7 @@ export default function BookingForm({ listingId, listingTitle, pricePerDay, curr
               id="booking-start" 
               className="w-full border border-border rounded p-2 text-sm bg-bg-body text-text-primary"
               value={startDate}
-              onChange={(e) => {
-                setStartDate(e.target.value);
-                setDays(null);
-                setTotal(null);
-              }}
+              onChange={(e) => setStartDate(e.target.value)}
             />
           </div>
           <div className="sahib-date-field">
@@ -127,26 +129,19 @@ export default function BookingForm({ listingId, listingTitle, pricePerDay, curr
               id="booking-end" 
               className="w-full border border-border rounded p-2 text-sm bg-bg-body text-text-primary"
               value={endDate}
-              onChange={(e) => {
-                setEndDate(e.target.value);
-                setDays(null);
-                setTotal(null);
-              }}
+              onChange={(e) => setEndDate(e.target.value)}
             />
           </div>
         </div>
-        
-        <button 
-          className="sahib-calc-btn w-full bg-primary text-white py-2.5 rounded-lg text-sm font-semibold transition-opacity mb-4 hover:opacity-90" 
-          onClick={handleCalculate}
-          disabled={!startDate || !endDate}
-          style={{ background: 'var(--color-primary)' }}
-        >
-          {t('Hesapla')}
-        </button>
 
+        {isInvalidDate && (
+          <div style={{ color: '#ff4d4f', fontSize: '0.8rem', marginBottom: '1rem', fontWeight: 600 }}>
+            ⚠️ {locale === 'en' ? 'Check-out date must be after check-in date.' : 'Çıkış tarihi giriş tarihinden sonra olmalıdır.'}
+          </div>
+        )}
+        
         {days !== null && total !== null && (
-          <div className="sahib-booking-total bg-bg-body rounded-lg p-4 border border-border space-y-2 mb-4">
+          <div className="sahib-booking-total bg-bg-body rounded-lg p-4 border border-border space-y-2 mb-4" style={{ marginTop: '1rem' }}>
             <div className="flex justify-between text-sm text-text-secondary">
               <span>{days} x {formatPrice(pricePerDay, currency)}</span>
               <span>{formatPrice(total, currency)}</span>
@@ -163,9 +158,10 @@ export default function BookingForm({ listingId, listingTitle, pricePerDay, curr
           disabled={days === null}
           onClick={handleOpenRequest}
           style={{ 
-            background: days === null ? 'var(--text-muted)' : 'var(--color-accent, #00CC88)', 
+            background: days === null ? 'var(--text-muted)' : 'var(--color-primary)', 
             cursor: days === null ? 'not-allowed' : 'pointer',
-            opacity: days === null ? 0.6 : 1
+            opacity: days === null ? 0.6 : 1,
+            marginTop: '0.5rem'
           }}
         >
           {locale === 'en' ? 'Send Booking Request' : 'Rezervasyon Talebi Gönder'}
