@@ -61,7 +61,7 @@ export async function POST(request: Request) {
     };
 
     const mailOptions = {
-      from: `"satiliktekne.com" <${sender}>`,
+      from: `"satiliktekne.com" <${user}>`,
       to: 'yachting@cmx.com.tr',
       replyTo: renterEmail,
       subject: `📅 Rezervasyon Talebi: ${listingTitle}`,
