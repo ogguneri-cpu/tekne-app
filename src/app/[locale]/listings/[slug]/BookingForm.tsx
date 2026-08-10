@@ -365,8 +365,8 @@ export default function BookingForm({ listingId, listingTitle, pricePerDay, curr
                 </h3>
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: '1.6', marginBottom: '2rem' }}>
                   {locale === 'en' 
-                    ? 'Your booking request has been successfully sent. We will contact you as soon as possible.' 
-                    : 'Rezervasyon talebiniz başarıyla yönetime iletilmiştir. En kısa sürede sizinle iletişime geçilecektir.'}
+                    ? 'Your booking request has been successfully received. Our experts will get back to you as soon as possible.' 
+                    : 'Rezervasyon talebiniz başarıyla alınmıştır. En kısa sürede uzmanlarımız sizinle iletişime geçecektir.'}
                 </p>
                 <button
                   onClick={() => setShowModal(false)}
