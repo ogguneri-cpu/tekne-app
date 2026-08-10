@@ -19,7 +19,8 @@ const CATEGORIES = [
   { value: 'bot', label: 'Bot', icon: '🚣' },
   { value: 'jet_ski', label: 'Jet Ski', icon: '🏄' },
   { value: 'guverte_teknesi', label: 'Güverte Teknesi', icon: '🛳️' },
-  { value: 'gulet', label: 'Gulet', icon: '⚓' }
+  { value: 'gulet', label: 'Gulet', icon: '⚓' },
+  { value: 'diger', label: 'Diğer', icon: '🛶' }
 ];
 
 const POPULAR_BRANDS = [

@@ -42,7 +42,8 @@ const CATEGORY_MAP: Record<string, { label: string; icon: string }> = {
   'bot': { label: 'Bot', icon: '🚣' },
   'jet_ski': { label: 'Jet Ski', icon: '🏄' },
   'guverte_teknesi': { label: 'Güverte Teknesi', icon: '🛳️' },
-  'gulet': { label: 'Gulet', icon: '⚓' }
+  'gulet': { label: 'Gulet', icon: '⚓' },
+  'diger': { label: 'Diğer', icon: '🛶' }
 };
 
 

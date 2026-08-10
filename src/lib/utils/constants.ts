@@ -70,5 +70,6 @@ export const CATEGORIES = [
   { id: 'bot', label: 'Bot', icon: '🚣', value: 'bot' },
   { id: 'jet_ski', label: 'Jet Ski', icon: '🏄', value: 'jet_ski' },
   { id: 'guverte_teknesi', label: 'Güverte Teknesi', icon: '🛳️', value: 'guverte_teknesi' },
-  { id: 'gulet', label: 'Gulet', icon: '⚓', value: 'gulet' }
+  { id: 'gulet', label: 'Gulet', icon: '⚓', value: 'gulet' },
+  { id: 'diger', label: 'Diğer', icon: '🛶', value: 'diger' }
 ];
