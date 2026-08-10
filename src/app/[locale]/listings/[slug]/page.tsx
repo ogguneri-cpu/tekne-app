@@ -215,7 +215,7 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
               {/* Booking section for rental */}
               {listing.type === 'rent' && (
                 <div className="sahib-booking" style={{ marginTop: '1rem' }}>
-                  <BookingForm pricePerDay={listing.price_per_day || 0} currency={listing.currency} />
+                  <BookingForm listingId={listing.id} listingTitle={displayTitle} pricePerDay={listing.price_per_day || 0} currency={listing.currency} />
                 </div>
               )}
 
