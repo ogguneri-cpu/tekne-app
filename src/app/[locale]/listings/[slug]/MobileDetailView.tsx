@@ -75,9 +75,7 @@ export default function MobileDetailView({
                 alt={sellerDisplayName} 
                 style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover' }} 
               />
-            ) : (
-              <span style={{ fontSize: '1.1rem' }}>🏢</span>
-            )}
+            ) : null}
             <span style={{ fontWeight: 800, color: 'var(--color-primary)', fontSize: '0.95rem' }}>
               {sellerDisplayName}
             </span>
@@ -94,10 +92,10 @@ export default function MobileDetailView({
         </div>
 
         <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginTop: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-          <span>📍</span>
+          
           <span>{locationText}</span>
           <span style={{ margin: '0 4px', color: 'var(--border)' }}>•</span>
-          <span>{catInfo.icon} {t(catInfo.label)}</span>
+          <span>{t(catInfo.label)}</span>
         </div>
       </div>
 
@@ -123,7 +121,7 @@ export default function MobileDetailView({
             gap: '6px'
           }}
         >
-          📋 {t('İlan Bilgileri')}
+          {t('İlan Bilgileri')}
         </button>
 
         <button
@@ -146,74 +144,22 @@ export default function MobileDetailView({
             gap: '6px'
           }}
         >
-          📄 {t('İlan Açıklaması')}
+          {t('İlan Açıklaması')}
         </button>
       </div>
 
       {/* TAB CONTENT 1: İLAN BİLGİLERİ */}
       {activeTab === 'info' && (
         <div style={{ background: 'var(--bg-card)' }}>
-          {/* Price Row */}
-          <div style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', background: 'rgba(0, 102, 255, 0.03)' }}>
-            <div>
-              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>
-                {priceLabel}
-              </div>
-              <div style={{ fontSize: '1.45rem', fontWeight: 900, color: 'var(--color-primary)', marginTop: '2px' }}>
-                {priceText}
-              </div>
+          {/* Price Row & Full-width Favorilere Ekle Button */}
+          <div style={{ padding: '16px', borderBottom: '1px solid var(--border)', background: 'rgba(0, 102, 255, 0.03)' }}>
+            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.5px' }}>
+              {priceLabel}
             </div>
-            
-            <div style={{ width: '150px' }}>
-              <FavoriteDetailButton listingId={listing.id} initialIsFavorited={initialIsFavorited} />
+            <div style={{ fontSize: '1.6rem', fontWeight: 900, color: 'var(--color-primary)', marginTop: '2px' }}>
+              {priceText}
             </div>
-          </div>
-
-          {/* Quick Action Buttons (Ara & Mesaj Gönder) inside content */}
-          <div style={{ padding: '12px 16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', borderBottom: '1px solid var(--border)' }}>
-            <a
-              href={telHref}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                padding: '12px',
-                background: 'var(--color-primary)',
-                color: '#fff',
-                borderRadius: '10px',
-                textDecoration: 'none',
-                fontWeight: 700,
-                fontSize: '0.9rem',
-                textAlign: 'center',
-                boxShadow: '0 2px 6px rgba(0, 102, 255, 0.2)'
-              }}
-            >
-              📞 {t('Ara')}
-            </a>
-            
-            <a
-              href={whatsappHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                padding: '12px',
-                background: '#25D366',
-                color: '#fff',
-                borderRadius: '10px',
-                textDecoration: 'none',
-                fontWeight: 700,
-                fontSize: '0.9rem',
-                textAlign: 'center',
-                boxShadow: '0 2px 6px rgba(37, 211, 102, 0.2)'
-              }}
-            >
-              💬 {t('Mesaj Gönder')}
-            </a>
+            <FavoriteDetailButton listingId={listing.id} initialIsFavorited={initialIsFavorited} />
           </div>
 
           {/* Rental Booking form if rent */}
