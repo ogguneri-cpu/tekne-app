@@ -593,6 +593,7 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
               <table className="sahib-specs-table">
                 <tbody>
                   <SpecRow label={t('Marka')} value={listing.brand} />
+                  <SpecRow label={t('Model')} value={listing.model} />
                   <SpecRow label={t('Model Yılı')} value={listing.year} />
                   <SpecRow label={t('Boy')} value={listing.length_meters ? `${listing.length_meters} ${t('metre')}` : null} />
                   <SpecRow label={t('En')} value={listing.beam_meters ? `${listing.beam_meters} ${t('metre')}` : null} />
