@@ -61,6 +61,7 @@ export async function POST(request: Request) {
       : 'https://satiliktekne.com';
     const adminLink = `${siteUrl}/tr/admin`;
     const listingLink = slug ? `${siteUrl}/tr/listings/${slug}` : siteUrl;
+    const profileLink = `${siteUrl}/tr/profile`;
 
     const priceFormatted = price ? new Intl.NumberFormat('tr-TR').format(price) + ' ' + (currency || 'TL') : '-';
     const locationFormatted = [city, district].filter(Boolean).join(' / ') || '-';
@@ -291,19 +292,21 @@ satiliktekne.com ekibi
     }
 
     // ─────────────────────────────────────────────────────────────
-    // CASE 2: LISTING APPROVED (ONAYLANDI BİLDİRİMİ)
+    // CASE 2: LISTING APPROVED (ONAYLANDI - ENERJİK & İLANI GÖR BUTONU)
     // ─────────────────────────────────────────────────────────────
     if (action === 'listing_approved' && userEmail) {
-      const approvedText = `satiliktekne.com - İlanınız Yayında!
+      const approvedText = `satiliktekne.com - Tebrikler, İlanınız Yayında!
 
 Sayın ${userName},
 
-Harika bir haber! "${title}" başlıklı ilanınız editörlerimiz tarafından incelenmiş ve onaylanarak sitemizde yayına alınmıştır.
+Harika bir haber! "${title}" başlıklı ilanınız editörlerimiz tarafından incelendi ve başarıyla yayına alındı!
+
+İlanınız artık Türkiye genelindeki binlerce potansiyel alıcı ve tekne tutkunu tarafından görüntülenebilir.
 
 İlanınızı görüntülemek için:
 ${listingLink}
 
-satiliktekne.com ekibi olarak bol kazançlı satışlar dileriz!
+satiliktekne.com ailesi olarak bol kazançlı ve keyifli bir satış süreci dileriz!
 `;
 
       const approvedMailHtml = `
@@ -316,9 +319,10 @@ satiliktekne.com ekibi olarak bol kazançlı satışlar dileriz!
             .container { max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 32px 28px; box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
             .header-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
             .badge { display: inline-block; background: #ecfdf5; color: #047857; font-weight: 700; font-size: 13px; padding: 6px 14px; border-radius: 20px; border: 1px solid #a7f3d0; white-space: nowrap; }
-            .content { text-align: center; }
-            .btn { display: inline-block; background: #0066ff; color: #ffffff !important; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 14px; margin-top: 24px; box-shadow: 0 4px 12px rgba(0, 102, 255, 0.25); }
-            .footer { margin-top: 24px; padding-top: 16px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #f1f5f9; }
+            .content { text-align: left; }
+            .btn { display: inline-block; background: #0066ff; color: #ffffff !important; padding: 15px 36px; border-radius: 10px; text-decoration: none; font-weight: 800; font-size: 15px; box-shadow: 0 4px 14px rgba(0, 102, 255, 0.3); transition: background 0.2s ease; }
+            .success-box { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 18px 20px; margin: 20px 0; font-size: 14.5px; color: #166534; line-height: 1.65; }
+            .footer { margin-top: 28px; padding-top: 16px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #f1f5f9; }
           </style>
         </head>
         <body>
@@ -340,17 +344,29 @@ satiliktekne.com ekibi olarak bol kazançlı satışlar dileriz!
             <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0 24px;">
 
             <div class="content">
-              <h3 style="color:#0f172a; margin-top:0; font-size:20px; font-weight:800;">Sayın ${userName},</h3>
-              <p style="color:#475569; font-size:15px; line-height:1.6; margin:0 0 16px;">
-                Harika bir haber! <strong>"${title}"</strong> başlıklı ilanınız editörlerimiz tarafından incelenmiş ve onaylanarak sitemizde yayına alınmıştır.
+              <h2 style="color:#0f172a; margin-top:0; margin-bottom:12px; font-size:22px; font-weight:900; line-height:1.3;">
+                Müjde! İlanınız Başarıyla Yayına Alındı 🚀
+              </h2>
+
+              <p style="color:#334155; font-size:15px; line-height:1.7; margin:0 0 16px;">
+                Sayın <strong>${userName}</strong>,
               </p>
-              <p style="color:#64748b; font-size:14px; margin-bottom:20px;">
-                İlanınız artık Türkiye genelinde binlerce potansiyel alıcı tarafından görüntülenebilir.
+
+              <p style="color:#334155; font-size:15px; line-height:1.7; margin:0 0 16px;">
+                <strong>"${title}"</strong> başlıklı ilanınız editörlerimiz tarafından incelendi, tüm standartları eksiksiz karşılayarak satiliktekne.com üzerinde yayına alındı!
               </p>
-              <a href="${listingLink}" class="btn">İlanınızı Sitede Görüntüleyin</a>
+
+              <div class="success-box">
+                🎉 <strong>İlanınız Artık Canlıda:</strong> İlanınız şu andan itibaren Türkiye genelinde binlerce tekne tutkunu ve potansiyel alıcı tarafından görüntülenebilir. Gelen teklifleri ve aramaları doğrudan telefonunuzdan veya profilinizden takip edebilirsiniz.
+              </div>
+
+              <div style="text-align: center; margin: 32px 0 16px;">
+                <a href="${listingLink}" class="btn">İlanı Gör →</a>
+              </div>
             </div>
+
             <div class="footer">
-              satiliktekne.com ekibi olarak bol kazançlı ve keyifli bir satış dileriz!
+              satiliktekne.com ailesi olarak bol kazançlı ve keyifli bir satış süreci dileriz!
             </div>
           </div>
         </body>
@@ -361,13 +377,135 @@ satiliktekne.com ekibi olarak bol kazançlı satışlar dileriz!
         from: `"satiliktekne.com" <${authUser}>`,
         replyTo: adminEmail,
         to: userEmail,
-        subject: `[satiliktekne.com] İlanınız Onaylandı ve Yayında: ${subjectTitle || 'İlan'}`,
+        subject: `[satiliktekne.com] Harika Haber! İlanınız Yayında: ${subjectTitle || 'İlan'}`,
         text: approvedText,
         html: approvedMailHtml,
         headers: commonHeaders,
         attachments
       });
       console.log(`Approval email sent successfully to ${userEmail} for listing: "${title}"`);
+      return NextResponse.json({ success: true });
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // CASE 3: LISTING REJECTED / NEEDS EDIT (POZİTİF DİL & 2 BUTON)
+    // ─────────────────────────────────────────────────────────────
+    if (action === 'listing_rejected' && userEmail) {
+      const rejectedText = `satiliktekne.com - İlanınız Hakkında Bilgilendirme
+
+Sayın ${userName},
+
+"${title}" başlıklı ilanınız editörlerimiz tarafından incelenmiştir. İlanınızın potansiyel alıcılarla en etkili şekilde buluşabilmesi için birkaç detayda güncelleme yapılması gerekmektedir.
+
+Olası Nedenler:
+- Yüklenen fotoğrafların netliği, çözünürlüğü veya tekneye ait olup olmadığı,
+- Tekne teknik özelliklerinde (marka, model, donanım veya boy) eksik/çelişkili bilgi bulunması,
+- Fiyat veya iletişim bilgilerinde yazım hatası olması.
+
+İlanınızı profilinizden kolayca düzenleyip yeniden onaya gönderebilirsiniz.
+
+İlanlarıma Git: ${profileLink}
+İletişime Geç: ${adminEmail}
+
+satiliktekne.com Ekibi
+`;
+
+      const rejectedMailHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 24px 16px; }
+            .container { max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 32px 28px; box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
+            .header-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+            .badge { display: inline-block; background: #fffbeb; color: #b45309; font-weight: 700; font-size: 13px; padding: 6px 14px; border-radius: 20px; border: 1px solid #fde68a; white-space: nowrap; }
+            .content { text-align: left; }
+            .notice-box { background: #fefce8; border: 1px solid #fef08a; border-radius: 12px; padding: 18px 20px; margin: 20px 0; font-size: 14px; color: #854d0e; line-height: 1.7; }
+            .notice-box ul { margin: 8px 0 0 18px; padding: 0; }
+            .notice-box li { margin-bottom: 4px; }
+            .btn-primary { display: inline-block; background: #0066ff; color: #ffffff !important; padding: 14px 28px; border-radius: 10px; text-decoration: none; font-weight: 700; font-size: 14px; box-shadow: 0 4px 12px rgba(0, 102, 255, 0.25); }
+            .btn-secondary { display: inline-block; background: #f1f5f9; color: #1e293b !important; padding: 14px 28px; border-radius: 10px; text-decoration: none; font-weight: 700; font-size: 14px; border: 1px solid #cbd5e1; }
+            .footer { margin-top: 28px; padding-top: 16px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #f1f5f9; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <!-- Top Header: Logo on left (aligned with text below), 'Düzenleme Gerekiyor' on right -->
+            <table class="header-table">
+              <tr>
+                <td style="vertical-align: middle; text-align: left; padding: 0;">
+                  <a href="${siteUrl}" target="_blank" style="text-decoration: none; display: inline-block;">
+                    <img src="${logoSrc}" alt="satiliktekne.com" style="height: 38px; width: auto; max-width: 200px; display: block; border: 0;" />
+                  </a>
+                </td>
+                <td style="vertical-align: middle; text-align: right; padding: 0;">
+                  <span class="badge">Düzenleme Gerekiyor</span>
+                </td>
+              </tr>
+            </table>
+
+            <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0 24px;">
+
+            <div class="content">
+              <h2 style="color:#0f172a; margin-top:0; margin-bottom:12px; font-size:20px; font-weight:800; line-height:1.35;">
+                İlanınızda Küçük Bir Güncelleme Gerekiyor
+              </h2>
+
+              <p style="color:#334155; font-size:15px; line-height:1.7; margin:0 0 16px;">
+                Sayın <strong>${userName}</strong>,
+              </p>
+
+              <p style="color:#334155; font-size:15px; line-height:1.7; margin:0 0 16px;">
+                <strong>"${title}"</strong> başlıklı ilanınız editörlerimiz tarafından incelenmiştir. İlanınızın en doğru ve etkili şekilde potansiyel alıcılarla buluşabilmesi için birkaç detayın güncellenmesi faydalı olacaktır.
+              </p>
+
+              <div class="notice-box">
+                🔍 <strong>Olası Güncelleme Nedenleri:</strong>
+                <ul>
+                  <li>Fotoğrafların netliği, çözünürlüğü veya doğrudan tekneye ait olup olmadığı,</li>
+                  <li>Tekne teknik özelliklerinde (marka, model, motor gücü veya boy) eksik ya da çelişkili bilgi bulunması,</li>
+                  <li>Fiyat veya iletişim bilgilerinde kontrol edilmesi gereken bir yazım detayı olabilir.</li>
+                </ul>
+              </div>
+
+              <p style="color:#475569; font-size:14.5px; line-height:1.7; margin:0 0 24px;">
+                Profil sayfanıza giderek ilanınızı kolayca güncelleyebilir ve tek tıkla yeniden onayımıza sunabilirsiniz. Ekibimiz ilanınızı memnuniyetle yeniden inceleyip hızla yayına alacaktır.
+              </p>
+
+              <!-- Two Action Buttons side by side -->
+              <table style="margin: 30px auto 16px; border-collapse: separate; border-spacing: 12px 0;">
+                <tr>
+                  <td>
+                    <a href="${profileLink}" class="btn-primary">İlanlarıma Git →</a>
+                  </td>
+                  <td>
+                    <a href="mailto:${adminEmail}" class="btn-secondary">İletişime Geç</a>
+                  </td>
+                </tr>
+              </table>
+            </div>
+
+            <div class="footer">
+              Her türlü sorunuz veya destek için bizimle <a href="mailto:${adminEmail}" style="color:#0066ff; text-decoration:none;">${adminEmail}</a> üzerinden her zaman iletişime geçebilirsiniz.<br>
+              satiliktekne.com Destek Ekibi
+            </div>
+          </div>
+        </body>
+        </html>
+      `;
+
+      await transporter.sendMail({
+        from: `"satiliktekne.com" <${authUser}>`,
+        replyTo: adminEmail,
+        to: userEmail,
+        subject: `[satiliktekne.com] İlanınız Hakkında Bilgilendirme: ${subjectTitle || 'İlan'}`,
+        text: rejectedText,
+        html: rejectedMailHtml,
+        headers: commonHeaders,
+        attachments
+      });
+      console.log(`Rejection/edit email sent successfully to ${userEmail} for listing: "${title}"`);
       return NextResponse.json({ success: true });
     }
 

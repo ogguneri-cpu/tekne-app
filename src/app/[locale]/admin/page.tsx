@@ -176,21 +176,21 @@ export default function AdminPage() {
 
       if (error) throw error;
 
-      // If approved, trigger email notification to the user
-      if (newStatus === 'approved' && targetItem) {
+      // Trigger email notification to the user (approved or rejected)
+      if (targetItem) {
         const userEmail = (targetItem as any).user_email;
         if (userEmail) {
           fetch('/api/notify', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              action: 'listing_approved',
+              action: newStatus === 'approved' ? 'listing_approved' : 'listing_rejected',
               title: targetItem.title,
               slug: targetItem.slug,
               userEmail: userEmail,
               userName: (targetItem as any).user_name || 'Değerli Üyemiz'
             })
-          }).catch(err => console.error('Failed to send approval email:', err));
+          }).catch(err => console.error('Failed to send status email:', err));
         }
       }
 
