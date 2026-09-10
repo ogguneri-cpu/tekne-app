@@ -1982,3 +1982,21 @@
   .review-popup-title { font-size: 1.2rem; }
   .review-popup-info { gap: 0.5rem; flex-direction: column; }
 }
+
+
+/* Responsive View Switcher */
+.sahib-mobile-only {
+  display: none !important;
+}
+.sahib-desktop-only {
+  display: block !important;
+}
+
+@media (max-width: 991px) {
+  .sahib-mobile-only {
+    display: block !important;
+  }
+  .sahib-desktop-only {
+    display: none !important;
+  }
+}

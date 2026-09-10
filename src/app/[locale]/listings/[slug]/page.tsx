@@ -9,6 +9,7 @@ import { createClient } from '@/lib/supabase/server';
 import { DEMO_DATA } from '@/lib/utils/constants';
 import { formatPrice } from '@/lib/utils/format';
 import DetailGallery from './DetailGallery';
+import MobileDetailView from './MobileDetailView';
 import BookingForm from './BookingForm';
 import FavoriteDetailButton from '@/components/listings/FavoriteDetailButton';
 
@@ -348,7 +349,25 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
         <Navbar />
 
         <main id="app">
-          {/* ── Back Button ── */}
+          {/* 📱 MOBILE VIEW (Sahibinden Layout) */}
+          <div className="sahib-mobile-only">
+            <MobileDetailView
+              listing={listing}
+              displayTitle={displayTitle}
+              cleanDescription={cleanDescription}
+              catInfo={catInfo}
+              priceText={priceText}
+              priceLabel={priceLabel}
+              userName={userName}
+              initialIsFavorited={initialIsFavorited}
+              featuresSchema={FEATURES_SCHEMA}
+              sellerTypeMap={SELLER_TYPE_MAP}
+            />
+          </div>
+
+          {/* 💻 DESKTOP VIEW */}
+          <div className="sahib-desktop-only">
+            {/* ── Back Button ── */}
           <div className="container">
             <Link href="/" className="sahib-back-btn">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -645,6 +664,7 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
                 </div>
               </div>
             </div>
+          </div>
           </div>
         </main>
 
