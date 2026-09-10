@@ -61,7 +61,7 @@ export default function MobileDetailView({
       </div>
 
       {/* 2. Photo Gallery */}
-      <div style={{ background: '#000' }}>
+      <div style={{ background: '#f8fafc', borderBottom: '1px solid var(--border)' }}>
         <DetailGallery images={listing.images || []} alt={displayTitle} />
       </div>
 
@@ -110,9 +110,9 @@ export default function MobileDetailView({
             fontSize: '0.95rem',
             fontWeight: 800,
             border: 'none',
-            borderBottom: activeTab === 'info' ? '3px solid #f59e0b' : '3px solid transparent',
-            background: activeTab === 'info' ? '#fef3c7' : 'transparent',
-            color: activeTab === 'info' ? '#92400e' : 'var(--text-secondary)',
+            borderBottom: activeTab === 'info' ? '3px solid var(--color-primary)' : '3px solid transparent',
+            background: activeTab === 'info' ? 'rgba(0, 102, 255, 0.08)' : 'transparent',
+            color: activeTab === 'info' ? 'var(--color-primary)' : 'var(--text-secondary)',
             cursor: 'pointer',
             transition: 'all 0.2s ease',
             display: 'flex',
@@ -133,9 +133,9 @@ export default function MobileDetailView({
             fontSize: '0.95rem',
             fontWeight: 800,
             border: 'none',
-            borderBottom: activeTab === 'desc' ? '3px solid #f59e0b' : '3px solid transparent',
-            background: activeTab === 'desc' ? '#fef3c7' : 'transparent',
-            color: activeTab === 'desc' ? '#92400e' : 'var(--text-secondary)',
+            borderBottom: activeTab === 'desc' ? '3px solid var(--color-primary)' : '3px solid transparent',
+            background: activeTab === 'desc' ? 'rgba(0, 102, 255, 0.08)' : 'transparent',
+            color: activeTab === 'desc' ? 'var(--color-primary)' : 'var(--text-secondary)',
             cursor: 'pointer',
             transition: 'all 0.2s ease',
             display: 'flex',
