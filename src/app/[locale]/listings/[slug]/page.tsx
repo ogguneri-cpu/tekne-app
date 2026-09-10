@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { cache } from 'react';
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
+import { Metadata } from 'next';
 import { Link } from '@/i18n/routing';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -42,6 +43,20 @@ const SELLER_TYPE_MAP: Record<string, string> = {
   'company': 'Firmadan'
 };
 
+
+function decodeHtml(html: string): string {
+  return html
+    .replace(/<[^>]*>?/gm, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 const SpecRow = ({ label, value }: { label: string; value: any }) => {
   if (value === undefined || value === null || value === '') return null;
   return (
@@ -52,120 +67,237 @@ const SpecRow = ({ label, value }: { label: string; value: any }) => {
   );
 };
 
+// Cached listing fetcher to prevent duplicate queries between generateMetadata and Page render
+const getListing = cache(async (slug: string) => {
+  try {
+    const supabase = await createClient();
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(slug);
+    let query = supabase.from('listings').select('*');
+    if (isUuid) {
+      query = query.or(`slug.eq.${slug},id.eq.${slug}`);
+    } else {
+      query = query.eq('slug', slug);
+    }
+    
+    const { data, error } = await query.maybeSingle();
+    if (!error && data) {
+      return data;
+    }
+  } catch (err) {
+    console.warn('Listing DB fetch error:', err);
+  }
+
+  // Fallback to DEMO_DATA
+  return DEMO_DATA.find(d => d.slug === slug || d.id === slug) || null;
+});
+
+export async function generateMetadata({ params }: ListingDetailPageProps): Promise<Metadata> {
+  const { locale, slug } = await params;
+  const rawListing = await getListing(slug);
+
+  if (!rawListing) {
+    return {
+      title: 'İlan Bulunamadı | satiliktekne.com',
+      robots: { index: false, follow: false }
+    };
+  }
+
+  const isEn = locale === 'en';
+  const displayTitle = (isEn && rawListing.title_en) ? rawListing.title_en : rawListing.title;
+  const rawDescription = (isEn && rawListing.description_en) ? rawListing.description_en : rawListing.description;
+
+  // Price formatting
+  const price = rawListing.type === 'rent' ? rawListing.rent_price_daily : (rawListing.sale_price || rawListing.price);
+  const currency = rawListing.currency || 'TRY';
+  const formattedPrice = price ? formatPrice(Number(price), currency) : '';
+
+  // Specs highlights for social snippet preview
+  const specs: string[] = [];
+  if (formattedPrice) specs.push(formattedPrice);
+  if (rawListing.type === 'rent') specs.push(isEn ? 'For Rent' : 'Kiralık');
+  else specs.push(isEn ? 'For Sale' : 'Satılık');
+  if (rawListing.year) specs.push(`${rawListing.year} Model`);
+  const lengthM = rawListing.length_m || rawListing.length_meters;
+  if (lengthM) specs.push(`${lengthM}m`);
+  const catInfo = CATEGORY_MAP[rawListing.category?.toLowerCase()];
+  if (catInfo?.label) specs.push(catInfo.label);
+  const location = [rawListing.district || rawListing.location_ilce, rawListing.city || rawListing.location_il].filter(Boolean).join(', ');
+  if (location) specs.push(location);
+
+  // Clean description text
+  const cleanDesc = decodeHtml(rawDescription || '');
+
+  const specsPrefix = specs.length > 0 ? specs.join(' • ') + ' — ' : '';
+  const metaDescription = (specsPrefix + (cleanDesc || 'Türkiye\'nin en kapsamlı tekne ilan platformu satiliktekne.com\'da inceleyin.')).slice(0, 220).trim();
+
+  const siteUrl = 'https://satiliktekne.com';
+  const pagePath = locale === 'tr' ? `/listings/${rawListing.slug || slug}` : `/${locale}/listings/${rawListing.slug || slug}`;
+  const canonicalUrl = `${siteUrl}${pagePath}`;
+
+  // Process images for Open Graph
+  const rawImages: string[] = Array.isArray(rawListing.images) ? rawListing.images : [];
+  const ogImages = rawImages.slice(0, 4).map((img: string) => {
+    let url = img;
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      url = `${siteUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+    }
+    return {
+      url,
+      width: 1200,
+      height: 630,
+      alt: displayTitle,
+    };
+  });
+
+  if (ogImages.length === 0) {
+    ogImages.push({
+      url: `${siteUrl}/assets/blog-satiliktekne-nedir.jpg`,
+      width: 1200,
+      height: 630,
+      alt: 'satiliktekne.com'
+    });
+  }
+
+  const titleWithBrand = displayTitle.includes('satiliktekne.com')
+    ? displayTitle
+    : `${displayTitle} | satiliktekne.com`;
+
+  return {
+    title: displayTitle,
+    description: metaDescription,
+    keywords: [
+      rawListing.brand,
+      rawListing.model,
+      rawListing.category,
+      catInfo?.label,
+      'satılık tekne',
+      'tekne ilanı',
+      rawListing.type === 'rent' ? 'kiralık tekne' : 'satılık tekne',
+      location,
+      'satiliktekne.com'
+    ].filter(Boolean) as string[],
+    alternates: {
+      canonical: canonicalUrl,
+      languages: {
+        'tr': `${siteUrl}/listings/${rawListing.slug || slug}`,
+        'en': `${siteUrl}/en/listings/${rawListing.slug || slug}`
+      }
+    },
+    openGraph: {
+      title: titleWithBrand,
+      description: metaDescription,
+      url: canonicalUrl,
+      siteName: 'satiliktekne.com',
+      locale: isEn ? 'en_US' : 'tr_TR',
+      type: 'website',
+      images: ogImages,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: titleWithBrand,
+      description: metaDescription,
+      images: [ogImages[0].url],
+    }
+  };
+}
+
 export default async function ListingDetailPage({ params }: ListingDetailPageProps) {
   try {
     const { locale, slug } = await params;
     const t = await getTranslations();
     const supabase = await createClient();
 
-    // 1. Fetch from Database
-    let listing: any = null;
-    try {
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(slug);
-      let query = supabase.from('listings').select('*');
-      if (isUuid) {
-        query = query.or(`slug.eq.${slug},id.eq.${slug}`);
-      } else {
-        query = query.eq('slug', slug);
-      }
-      
-      const { data, error } = await query.maybeSingle();
-      if (error) {
-        console.warn('DB query error:', error.message);
-      }
-
-      if (data) {
-        let profile = { full_name: '', phone: '', role: 'user', company_name: '', company_logo: '', website: '' };
-        try {
-          const { data: profileData } = await supabase
-            .from('profiles')
-            .select('full_name, phone, role, company_name, company_logo, website')
-            .eq('id', data.user_id)
-            .maybeSingle();
-          if (profileData) {
-            profile = {
-              full_name: profileData.full_name || '',
-              phone: profileData.phone || '',
-              role: profileData.role || 'user',
-              company_name: profileData.company_name || '',
-              company_logo: profileData.company_logo || '',
-              website: profileData.website || ''
-            };
-          }
-        } catch (profileErr) {
-          console.warn('Profile fetch error:', profileErr);
-        }
-
-        listing = {
-          id: data.id,
-          user_id: data.user_id,
-          status: data.status,
-          title: data.title,
-          title_en: data.title_en,
-          slug: data.slug,
-          description: data.description,
-          description_en: data.description_en,
-          category: data.category,
-          brand: data.brand,
-          model: data.model,
-          type: data.type === 'rent' ? 'rent' : 'sale',
-          sale_price: data.sale_price ? Number(data.sale_price) : undefined,
-          price_per_day: data.rent_price_daily ? Number(data.rent_price_daily) : undefined,
-          currency: data.currency,
-          location_il: data.city,
-          location_ilce: data.district,
-          year: data.year,
-          length_meters: data.length_m ? Number(data.length_m) : undefined,
-          beam_meters: data.beam_m ? Number(data.beam_m) : undefined,
-          hull_material: data.hull_material,
-          cabin_count: data.cabin_count,
-          engine_count: data.engine_count,
-          engine_power: data.engine_power_hp,
-          engine_brand: data.engine_brand,
-          fuel_type: data.fuel_type,
-          engine_hours: data.engine_hours,
-          flag: data.flag,
-          seller_type: data.seller_type,
-          condition: data.condition,
-          is_swap: data.is_swap,
-          features: data.features || {},
-          images: data.images || [],
-          user_name: data.user_name || profile.full_name || 'Kullanıcı',
-          user_phone: data.user_phone || profile.phone || '',
-          user_email: data.user_email || '',
-          seller_role: profile.role,
-          company_name: profile.company_name,
-          company_logo: profile.company_logo,
-          seller_website: profile.website
-        };
-      }
-    } catch (e) {
-      console.warn('Listing not found in DB, checking demo data:', e);
-    }
-
-    // 2. Fallback to Demo Data
-    if (!listing) {
-      listing = DEMO_DATA.find(d => d.slug === slug || d.id === slug);
-    }
-
-    if (!listing) {
+    // 1. Fetch from Database / Demo using deduplicated cache
+    const rawListing = await getListing(slug);
+    if (!rawListing) {
       notFound();
     }
 
-    // 2.1 Check if favorited
-    let initialIsFavorited = false;
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session && listing) {
-      const { data: favData } = await supabase
-        .from('favorites')
-        .select('id')
-        .eq('user_id', session.user.id)
-        .eq('listing_id', listing.id)
-        .maybeSingle();
-      initialIsFavorited = !!favData;
+    let profile = { full_name: '', phone: '', role: 'user', company_name: '', company_logo: '', website: '' };
+    if (rawListing.user_id && rawListing.user_id !== 'cmx-user') {
+      try {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('full_name, phone, role, company_name, company_logo, website')
+          .eq('id', rawListing.user_id)
+          .maybeSingle();
+        if (profileData) {
+          profile = {
+            full_name: profileData.full_name || '',
+            phone: profileData.phone || '',
+            role: profileData.role || 'user',
+            company_name: profileData.company_name || '',
+            company_logo: profileData.company_logo || '',
+            website: profileData.website || ''
+          };
+        }
+      } catch (profileErr) {
+        console.warn('Profile fetch error:', profileErr);
+      }
     }
 
-    const catInfo = CATEGORY_MAP[listing.category.toLowerCase()] || { icon: '🚢', label: listing.category };
+    const listing = {
+      id: rawListing.id,
+      user_id: rawListing.user_id,
+      status: rawListing.status,
+      title: rawListing.title,
+      title_en: rawListing.title_en,
+      slug: rawListing.slug,
+      description: rawListing.description,
+      description_en: rawListing.description_en,
+      category: rawListing.category,
+      brand: rawListing.brand,
+      model: rawListing.model,
+      type: rawListing.type === 'rent' ? 'rent' : 'sale',
+      sale_price: rawListing.sale_price ? Number(rawListing.sale_price) : undefined,
+      price_per_day: rawListing.rent_price_daily ? Number(rawListing.rent_price_daily) : undefined,
+      currency: rawListing.currency,
+      location_il: rawListing.city || rawListing.location_il,
+      location_ilce: rawListing.district || rawListing.location_ilce,
+      year: rawListing.year,
+      length_meters: (rawListing.length_m || rawListing.length_meters) ? Number(rawListing.length_m || rawListing.length_meters) : undefined,
+      beam_meters: (rawListing.beam_m || rawListing.beam_meters) ? Number(rawListing.beam_m || rawListing.beam_meters) : undefined,
+      hull_material: rawListing.hull_material,
+      cabin_count: rawListing.cabin_count,
+      engine_count: rawListing.engine_count,
+      engine_power: rawListing.engine_power_hp || rawListing.engine_power,
+      engine_brand: rawListing.engine_brand,
+      fuel_type: rawListing.fuel_type,
+      engine_hours: rawListing.engine_hours,
+      flag: rawListing.flag,
+      seller_type: rawListing.seller_type,
+      condition: rawListing.condition,
+      is_swap: rawListing.is_swap,
+      features: rawListing.features || {},
+      images: rawListing.images || [],
+      user_name: rawListing.user_name || profile.full_name || 'Kullanıcı',
+      user_phone: rawListing.user_phone || profile.phone || '',
+      user_email: rawListing.user_email || '',
+      seller_role: profile.role,
+      company_name: profile.company_name,
+      company_logo: profile.company_logo,
+      seller_website: profile.website,
+      created_at: rawListing.created_at
+    };
+
+    // 2. Check if favorited
+    let initialIsFavorited = false;
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session && listing) {
+        const { data: favData } = await supabase
+          .from('favorites')
+          .select('id')
+          .eq('user_id', session.user.id)
+          .eq('listing_id', listing.id)
+          .maybeSingle();
+        initialIsFavorited = !!favData;
+      }
+    } catch (favErr) {
+      // Ignored
+    }
+
+    const catInfo = CATEGORY_MAP[listing.category?.toLowerCase()] || { icon: '🚢', label: listing.category || 'Tekne' };
     const displayTitle = (locale === 'en' && listing.title_en) ? listing.title_en : listing.title;
     const displayDesc = (locale === 'en' && listing.description_en) ? listing.description_en : listing.description;
     const userName = listing.user_name || 'Kullanıcı';
@@ -175,11 +307,44 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
       : formatPrice(listing.price_per_day, listing.currency);
 
     const priceLabel = listing.type === 'sale' ? t('Satış Fiyatı') : t('/ gün kiralama');
-
     const cleanDescription = displayDesc || t('Açıklama eklenmemiş');
+
+    // JSON-LD Structured Data for Google Rich Snippets
+    const siteUrl = 'https://satiliktekne.com';
+    const pagePath = locale === 'tr' ? `/listings/${listing.slug || slug}` : `/${locale}/listings/${listing.slug || slug}`;
+    const canonicalUrl = `${siteUrl}${pagePath}`;
+
+    const jsonLd = {
+      '@context': 'https://schema.org',
+      '@type': 'Product',
+      name: displayTitle,
+      image: (listing.images || []).map((img: string) => {
+        if (img.startsWith('http://') || img.startsWith('https://')) return img;
+        return `${siteUrl}${img.startsWith('/') ? '' : '/'}${img}`;
+      }),
+      description: (displayDesc || '').replace(/<[^>]*>?/gm, ' ').slice(0, 300).trim(),
+      category: catInfo.label,
+      brand: listing.brand ? {
+        '@type': 'Brand',
+        name: listing.brand
+      } : undefined,
+      offers: {
+        '@type': 'Offer',
+        priceCurrency: listing.currency || 'TRY',
+        price: listing.type === 'rent' ? (listing.price_per_day || 0) : (listing.sale_price || 0),
+        availability: listing.status === 'approved' ? 'https://schema.org/InStock' : 'https://schema.org/SoldOut',
+        url: canonicalUrl
+      }
+    };
 
     return (
       <>
+        {/* JSON-LD Rich Snippet for Search Engines */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+
         <Navbar />
 
         <main id="app">
@@ -260,35 +425,72 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
                   </div>
                 )}
 
+                {listing.seller_website && (
+                  <div style={{ marginBottom: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem' }}>
+                    <a 
+                      href={listing.seller_website.startsWith('http') ? listing.seller_website : `https://${listing.seller_website}`} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', color: 'var(--color-primary)', textDecoration: 'none', fontWeight: 600 }}
+                    >
+                      🌐 {listing.seller_website.replace(/^https?:\/\//, '')}
+                    </a>
+                  </div>
+                )}
+
                 {listing.user_phone && (
-                  <a 
-                    href={`tel:${String(listing.user_phone).replace(/\s|\(|\)/g, '')}`} 
-                    className="sahib-phone-btn"
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px',
-                      width: '100%',
-                      padding: '12px',
-                      background: 'var(--color-primary)',
-                      color: '#fff',
-                      borderRadius: '10px',
-                      textDecoration: 'none',
-                      fontWeight: 700,
-                      fontSize: '0.9rem',
-                      marginBottom: '8px',
-                      textAlign: 'center'
-                    }}
-                  >
-                    📞 Cep: {listing.user_phone}
-                  </a>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '10px' }}>
+                    <a 
+                      href={`tel:${listing.user_phone.replace(/\s+/g, '')}`}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        width: '100%',
+                        padding: '12px',
+                        background: 'var(--color-primary)',
+                        color: '#fff',
+                        borderRadius: '10px',
+                        textDecoration: 'none',
+                        fontWeight: 700,
+                        fontSize: '0.95rem',
+                        boxShadow: '0 4px 12px rgba(0, 102, 255, 0.2)',
+                        textAlign: 'center'
+                      }}
+                    >
+                      📞 {listing.user_phone}
+                    </a>
+
+                    <a 
+                      href={`https://wa.me/${listing.user_phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Merhaba, satiliktekne.com üzerindeki "${displayTitle}" ilanınızla ilgileniyorum.`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        width: '100%',
+                        padding: '12px',
+                        background: '#25D366',
+                        color: '#fff',
+                        borderRadius: '10px',
+                        textDecoration: 'none',
+                        fontWeight: 700,
+                        fontSize: '0.95rem',
+                        boxShadow: '0 4px 12px rgba(37, 211, 102, 0.2)',
+                        textAlign: 'center'
+                      }}
+                    >
+                      💬 WhatsApp ile Yazın
+                    </a>
+                  </div>
                 )}
 
                 {listing.user_email && (
                   <a 
-                    href={`mailto:${listing.user_email}`} 
-                    className="sahib-phone-btn"
+                    href={`mailto:${listing.user_email}?subject=${encodeURIComponent(`İlan Hakkında: ${displayTitle}`)}`}
                     style={{
                       display: 'flex',
                       alignItems: 'center',

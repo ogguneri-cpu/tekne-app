@@ -31,15 +31,44 @@ export async function generateMetadata({ params }: BlogDetailPageProps): Promise
   const metaTitle = post.meta_title || title;
   const metaDesc = post.meta_description || '';
   const keywords = post.meta_keywords || '';
+  const siteUrl = 'https://satiliktekne.com';
+  const pageUrl = locale === 'tr' ? `${siteUrl}/blog/${slug}` : `${siteUrl}/${locale}/blog/${slug}`;
+
+  let ogImageUrl = post.image;
+  if (ogImageUrl && !ogImageUrl.startsWith('http://') && !ogImageUrl.startsWith('https://')) {
+    ogImageUrl = `${siteUrl}${ogImageUrl.startsWith('/') ? '' : '/'}${ogImageUrl}`;
+  }
+  if (!ogImageUrl) {
+    ogImageUrl = `${siteUrl}/assets/blog-satiliktekne-nedir.jpg`;
+  }
 
   return {
     title: `${metaTitle} | satiliktekne.com`,
     description: metaDesc,
     keywords: keywords,
+    alternates: {
+      canonical: pageUrl,
+    },
     openGraph: {
       title: metaTitle,
       description: metaDesc,
-      images: post.image ? [{ url: post.image }] : [],
+      url: pageUrl,
+      siteName: 'satiliktekne.com',
+      type: 'article',
+      images: [
+        {
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: metaTitle,
+        }
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: metaTitle,
+      description: metaDesc,
+      images: [ogImageUrl],
     }
   };
 }
