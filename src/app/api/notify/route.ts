@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
+import path from 'path';
+import fs from 'fs';
 
 export async function POST(request: Request) {
   try {
@@ -49,56 +51,78 @@ export async function POST(request: Request) {
     const locationFormatted = [city, district].filter(Boolean).join(' / ') || '-';
     const brandModelFormatted = [brand, model].filter(Boolean).join(' ') || '-';
 
+    // Logo embedding: use CID attachment if local file exists, otherwise fallback to remote URL
+    const logoPath = path.join(process.cwd(), 'public/assets/logo.png');
+    const hasLocalLogo = fs.existsSync(logoPath);
+    const logoSrc = hasLocalLogo ? 'cid:site-logo' : `${siteUrl}/assets/logo.png`;
+    const attachments = hasLocalLogo
+      ? [{ filename: 'logo.png', path: logoPath, cid: 'site-logo' }]
+      : [];
+
     // ─────────────────────────────────────────────────────────────
     // CASE 1: NEW LISTING SUBMITTED (ONAY BEKLİYOR)
     // ─────────────────────────────────────────────────────────────
     if (action === 'new_listing') {
-      // 1. Email to Admin
+      // 1. Email to Admin (yachting@cmx.com.tr)
       const adminMailHtml = `
         <!DOCTYPE html>
         <html>
         <head>
           <meta charset="utf-8">
           <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 0; }
-            .container { max-width: 600px; margin: 20px auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-            .header { background: #0a1628; color: #ffffff; padding: 24px; text-align: center; }
-            .badge { display: inline-block; background: #fef3c7; color: #92400e; font-weight: 700; font-size: 12px; padding: 4px 14px; border-radius: 20px; margin-top: 8px; letter-spacing: 0.5px; }
-            .content { padding: 28px; }
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 24px 16px; }
+            .container { max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 32px 28px; box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
+            .header-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+            .badge { display: inline-block; background: #fef3c7; color: #92400e; font-weight: 700; font-size: 13px; padding: 6px 14px; border-radius: 20px; border: 1px solid #fde68a; white-space: nowrap; }
             .table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 14px; }
             .table td { padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
             .table td.label { color: #64748b; width: 38%; }
             .table td.value { font-weight: 600; color: #0f172a; text-align: right; }
             .btn { display: inline-block; background: #0066ff; color: #ffffff !important; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 14px; box-shadow: 0 4px 12px rgba(0, 102, 255, 0.25); }
-            .footer { background: #f8fafc; padding: 16px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #f1f5f9; }
+            .footer { margin-top: 24px; padding-top: 16px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #f1f5f9; }
           </style>
         </head>
         <body>
           <div class="container">
-            <div class="header">
-              <h2 style="margin:0; font-size:22px;">⚓ satiliktekne.com</h2>
-              <div class="badge">🟡 YENİ İLAN ONAY BEKLİYOR</div>
+            <!-- Top Header: Logo on left (aligned with text below), 'Yeni İlan Onay Bekliyor' on right -->
+            <table class="header-table">
+              <tr>
+                <td style="vertical-align: middle; text-align: left; padding: 0;">
+                  <a href="${siteUrl}" target="_blank" style="text-decoration: none; display: inline-block;">
+                    <img src="${logoSrc}" alt="satiliktekne.com" style="height: 38px; width: auto; max-width: 200px; display: block; border: 0;" />
+                  </a>
+                </td>
+                <td style="vertical-align: middle; text-align: right; padding: 0;">
+                  <span class="badge">Yeni İlan Onay Bekliyor</span>
+                </td>
+              </tr>
+            </table>
+
+            <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0 24px;">
+
+            <h3 style="color:#0f172a; margin-top:0; margin-bottom:8px; font-size:20px; font-weight:800; line-height:1.3;">
+              ${title || 'Başlıksız İlan'}
+            </h3>
+            <p style="color:#475569; font-size:14.5px; line-height:1.6; margin:0 0 20px;">
+              Platformda yeni bir ilan girişi yapıldı. İlan detayları aşağıda listelenmiştir. İlanı inceleyip onaylamak veya düzenlemek için admin panelini ziyaret edebilirsiniz.
+            </p>
+
+            <table class="table">
+              <tr><td class="label">İlan Türü</td><td class="value">${type === 'sale' ? 'Satılık' : 'Kiralık'}</td></tr>
+              <tr><td class="label">Kategori</td><td class="value">${category || '-'}</td></tr>
+              <tr><td class="label">Marka / Model</td><td class="value">${brandModelFormatted}</td></tr>
+              ${year ? `<tr><td class="label">Model Yılı</td><td class="value">${year}</td></tr>` : ''}
+              <tr><td class="label">Fiyat</td><td class="value" style="color: #0066ff; font-size: 15px;">${priceFormatted}</td></tr>
+              <tr><td class="label">Konum</td><td class="value">${locationFormatted}</td></tr>
+              <tr><td class="label">İlan Sahibi</td><td class="value">${userName}</td></tr>
+              ${userPhone ? `<tr><td class="label">Telefon</td><td class="value">${userPhone}</td></tr>` : ''}
+              ${userEmail ? `<tr><td class="label">E-posta</td><td class="value">${userEmail}</td></tr>` : ''}
+            </table>
+
+            <div style="text-align: center; margin-top: 28px;">
+              <a href="${adminLink}" class="btn">Admin Panelinde İncele ve Onayla</a>
             </div>
-            <div class="content">
-              <h3 style="color:#0f172a; margin-top:0; font-size:18px;">${title || 'Başlıksız İlan'}</h3>
-              <p style="color:#475569; font-size:14px; line-height:1.6; margin:0 0 16px;">
-                Platformda yeni bir ilan girişi yapıldı. İlan detayları aşağıda listelenmiştir. İlanı inceleyip onaylamak veya düzenlemek için admin panelini ziyaret edebilirsiniz.
-              </p>
-              <table class="table">
-                <tr><td class="label">İlan Türü</td><td class="value">${type === 'sale' ? 'Satılık' : 'Kiralık'}</td></tr>
-                <tr><td class="label">Kategori</td><td class="value">${category || '-'}</td></tr>
-                <tr><td class="label">Marka / Model</td><td class="value">${brandModelFormatted}</td></tr>
-                ${year ? `<tr><td class="label">Model Yılı</td><td class="value">${year}</td></tr>` : ''}
-                <tr><td class="label">Fiyat</td><td class="value" style="color: #0066ff; font-size: 15px;">${priceFormatted}</td></tr>
-                <tr><td class="label">Konum</td><td class="value">${locationFormatted}</td></tr>
-                <tr><td class="label">İlan Sahibi</td><td class="value">${userName}</td></tr>
-                ${userPhone ? `<tr><td class="label">Telefon</td><td class="value">${userPhone}</td></tr>` : ''}
-                ${userEmail ? `<tr><td class="label">E-posta</td><td class="value">${userEmail}</td></tr>` : ''}
-              </table>
-              <div style="text-align: center; margin-top: 28px;">
-                <a href="${adminLink}" class="btn">Admin Panelinde İncele ve Onayla</a>
-              </div>
-            </div>
+
             <div class="footer">
               Bu e-posta satiliktekne.com yönetim paneli bildirim sistemi tarafından otomatik gönderilmiştir.
             </div>
@@ -112,7 +136,8 @@ export async function POST(request: Request) {
         replyTo: userEmail || adminEmail,
         to: adminEmail,
         subject: `🚤 Yeni İlan Onay Bekliyor: ${title || 'İlan'}`,
-        html: adminMailHtml
+        html: adminMailHtml,
+        attachments
       });
       console.log(`Admin notification email sent successfully to ${adminEmail} for: "${title}"`);
 
@@ -124,41 +149,51 @@ export async function POST(request: Request) {
           <head>
             <meta charset="utf-8">
             <style>
-              body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 0; }
-              .container { max-width: 600px; margin: 20px auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-              .header { background: #0a1628; color: #ffffff; padding: 24px; text-align: center; }
-              .content { padding: 28px; }
-              .badge { display: inline-block; background: #eff6ff; color: #1d4ed8; font-weight: 700; font-size: 12px; padding: 4px 14px; border-radius: 20px; margin-top: 8px; }
+              body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 24px 16px; }
+              .container { max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 32px 28px; box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
+              .header-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+              .badge { display: inline-block; background: #eff6ff; color: #1d4ed8; font-weight: 700; font-size: 13px; padding: 6px 14px; border-radius: 20px; border: 1px solid #bfdbfe; white-space: nowrap; }
               .table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 14px; }
               .table td { padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
               .table td.label { color: #64748b; width: 38%; }
               .table td.value { font-weight: 600; color: #0f172a; text-align: right; }
               .info-box { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 16px; margin-top: 20px; font-size: 13.5px; color: #166534; line-height: 1.6; }
-              .footer { background: #f8fafc; padding: 16px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #f1f5f9; }
+              .footer { margin-top: 24px; padding-top: 16px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #f1f5f9; }
             </style>
           </head>
           <body>
             <div class="container">
-              <div class="header">
-                <h2 style="margin:0; font-size:22px;">⚓ satiliktekne.com</h2>
-                <div class="badge">İLANINIZ ALINDI</div>
+              <!-- Top Header: Logo on left, 'İlanınız Alındı' on right -->
+              <table class="header-table">
+                <tr>
+                  <td style="vertical-align: middle; text-align: left; padding: 0;">
+                    <a href="${siteUrl}" target="_blank" style="text-decoration: none; display: inline-block;">
+                      <img src="${logoSrc}" alt="satiliktekne.com" style="height: 38px; width: auto; max-width: 200px; display: block; border: 0;" />
+                    </a>
+                  </td>
+                  <td style="vertical-align: middle; text-align: right; padding: 0;">
+                    <span class="badge">İlanınız Alındı</span>
+                  </td>
+                </tr>
+              </table>
+
+              <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0 24px;">
+
+              <h3 style="color:#0f172a; margin-top:0;">Sayın ${userName},</h3>
+              <p style="color:#475569; font-size:14.5px; line-height:1.6;">
+                <strong>"${title}"</strong> başlıklı ilanınız başarıyla oluşturulmuş ve değerlendirilmek üzere editörlerimize iletilmiştir.
+              </p>
+              <div class="info-box">
+                ✅ <strong>Onay Süreci:</strong> Güvenli alışveriş standartlarımız gereğince ilanınız en kısa sürede kontrol edilerek onaylanacak ve satiliktekne.com üzerinde yayına alınacaktır. Yayına alındığında tarafınıza tekrar bilgilendirme yapılacaktır.
               </div>
-              <div class="content">
-                <h3 style="color:#0f172a; margin-top:0;">Sayın ${userName},</h3>
-                <p style="color:#475569; font-size:14.5px; line-height:1.6;">
-                  <strong>"${title}"</strong> başlıklı ilanınız başarıyla oluşturulmuş ve değerlendirilmek üzere editörlerimize iletilmiştir.
-                </p>
-                <div class="info-box">
-                  ✅ <strong>Onay Süreci:</strong> Güvenli alışveriş standartlarımız gereğince ilanınız en kısa sürede kontrol edilerek onaylanacak ve satiliktekne.com üzerinde yayına alınacaktır. Yayına alındığında tarafınıza tekrar bilgilendirme yapılacaktır.
-                </div>
-                <table class="table">
-                  <tr><td class="label">İlan Başlığı</td><td class="value">${title}</td></tr>
-                  <tr><td class="label">Kategori</td><td class="value">${category || '-'}</td></tr>
-                  <tr><td class="label">Marka / Model</td><td class="value">${brandModelFormatted}</td></tr>
-                  <tr><td class="label">Fiyat</td><td class="value" style="color: #0066ff;">${priceFormatted}</td></tr>
-                  <tr><td class="label">Konum</td><td class="value">${locationFormatted}</td></tr>
-                </table>
-              </div>
+              <table class="table">
+                <tr><td class="label">İlan Başlığı</td><td class="value">${title}</td></tr>
+                <tr><td class="label">Kategori</td><td class="value">${category || '-'}</td></tr>
+                <tr><td class="label">Marka / Model</td><td class="value">${brandModelFormatted}</td></tr>
+                <tr><td class="label">Fiyat</td><td class="value" style="color: #0066ff;">${priceFormatted}</td></tr>
+                <tr><td class="label">Konum</td><td class="value">${locationFormatted}</td></tr>
+              </table>
+
               <div class="footer">
                 satiliktekne.com ailesini tercih ettiğiniz için teşekkür ederiz.<br>
                 Sorularınız için bizimle <a href="mailto:${adminEmail}" style="color:#0066ff; text-decoration:none;">${adminEmail}</a> adresinden iletişime geçebilirsiniz.
@@ -173,7 +208,8 @@ export async function POST(request: Request) {
           replyTo: adminEmail,
           to: userEmail,
           subject: `⚓ İlanınız Başarıyla Alındı (Onay Sürecinde) - satiliktekne.com`,
-          html: userMailHtml
+          html: userMailHtml,
+          attachments
         });
         console.log(`User confirmation email sent successfully to ${userEmail}`);
       }
@@ -191,21 +227,33 @@ export async function POST(request: Request) {
         <head>
           <meta charset="utf-8">
           <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 0; }
-            .container { max-width: 600px; margin: 20px auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-            .header { background: #059669; color: #ffffff; padding: 24px; text-align: center; }
-            .badge { display: inline-block; background: #d1fae5; color: #065f46; font-weight: 700; font-size: 12px; padding: 4px 14px; border-radius: 20px; margin-top: 8px; }
-            .content { padding: 28px; text-align: center; }
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 24px 16px; }
+            .container { max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 32px 28px; box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
+            .header-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+            .badge { display: inline-block; background: #d1fae5; color: #065f46; font-weight: 700; font-size: 13px; padding: 6px 14px; border-radius: 20px; border: 1px solid #a7f3d0; white-space: nowrap; }
+            .content { text-align: center; }
             .btn { display: inline-block; background: #0066ff; color: #ffffff !important; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 14px; margin-top: 24px; box-shadow: 0 4px 12px rgba(0, 102, 255, 0.25); }
-            .footer { background: #f8fafc; padding: 16px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #f1f5f9; }
+            .footer { margin-top: 24px; padding-top: 16px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #f1f5f9; }
           </style>
         </head>
         <body>
           <div class="container">
-            <div class="header">
-              <h2 style="margin:0; font-size:22px;">⚓ satiliktekne.com</h2>
-              <div class="badge">🎉 İLANINIZ YAYINDA!</div>
-            </div>
+            <!-- Top Header: Logo on left, 'İlanınız Yayında' on right -->
+            <table class="header-table">
+              <tr>
+                <td style="vertical-align: middle; text-align: left; padding: 0;">
+                  <a href="${siteUrl}" target="_blank" style="text-decoration: none; display: inline-block;">
+                    <img src="${logoSrc}" alt="satiliktekne.com" style="height: 38px; width: auto; max-width: 200px; display: block; border: 0;" />
+                  </a>
+                </td>
+                <td style="vertical-align: middle; text-align: right; padding: 0;">
+                  <span class="badge">🎉 İlanınız Yayında</span>
+                </td>
+              </tr>
+            </table>
+
+            <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0 24px;">
+
             <div class="content">
               <h3 style="color:#0f172a; margin-top:0;">Sayın ${userName},</h3>
               <p style="color:#475569; font-size:15px; line-height:1.6; margin:0 0 16px;">
@@ -229,7 +277,8 @@ export async function POST(request: Request) {
         replyTo: adminEmail,
         to: userEmail,
         subject: `🎉 Tebrikler! İlanınız Onaylandı ve Yayında - satiliktekne.com`,
-        html: approvedMailHtml
+        html: approvedMailHtml,
+        attachments
       });
       console.log(`Approval email sent successfully to ${userEmail} for listing: "${title}"`);
       return NextResponse.json({ success: true });
