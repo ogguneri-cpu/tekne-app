@@ -128,7 +128,9 @@ export default function AdminPage() {
           location_ilce: item.district,
           year: item.year,
           length_meters: item.length_m ? Number(item.length_m) : undefined,
-          images: item.images || []
+          images: item.images || [],
+          user_email: item.user_email,
+          user_name: item.user_name
         })) as Listing[];
         setListings(mapped);
       }
@@ -162,6 +164,8 @@ export default function AdminPage() {
     if (!confirm(`İlanı ${newStatus === 'approved' ? 'onaylamak' : 'reddetmek'} istediğinizden emin misiniz?`)) return;
 
     try {
+      const targetItem = listings.find(item => item.id === id);
+
       const { error } = await supabase
         .from('listings')
         .update({ 
@@ -171,6 +175,24 @@ export default function AdminPage() {
         .eq('id', id);
 
       if (error) throw error;
+
+      // If approved, trigger email notification to the user
+      if (newStatus === 'approved' && targetItem) {
+        const userEmail = (targetItem as any).user_email;
+        if (userEmail) {
+          fetch('/api/notify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'listing_approved',
+              title: targetItem.title,
+              slug: targetItem.slug,
+              userEmail: userEmail,
+              userName: (targetItem as any).user_name || 'Değerli Üyemiz'
+            })
+          }).catch(err => console.error('Failed to send approval email:', err));
+        }
+      }
 
       // Update listings in local state
       setListings(prev => prev.map(item => 

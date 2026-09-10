@@ -421,14 +421,21 @@ export default function CreateListingPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          action: 'new_listing',
           title,
           category,
-          brand,
+          brand: brand === 'Diğer' ? customBrand : brand,
+          model: model || '',
           price: cleanPrice,
           currency,
           city,
-          district,
-          type
+          district: district || '',
+          type,
+          year: year || '',
+          userEmail: contactEmail || user.email || '',
+          userName: user.user_metadata?.full_name || 'Kullanıcı',
+          userPhone: contactPhone,
+          slug
         })
       }).catch(err => console.error('Failed to send notification email:', err));
 
