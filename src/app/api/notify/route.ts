@@ -3,6 +3,21 @@ import nodemailer from 'nodemailer';
 import path from 'path';
 import fs from 'fs';
 
+// Helper to normalize subject titles and prevent SUBJ_ALL_CAPS spam penalties
+function formatSubjectTitle(rawTitle: string): string {
+  if (!rawTitle) return '';
+  const upperCount = (rawTitle.match(/[A-ZĞÜŞİÖÇ]/g) || []).length;
+  const alphaCount = (rawTitle.match(/[a-zA-ZğüşıöçĞÜŞİÖÇ]/g) || []).length;
+  if (alphaCount > 4 && upperCount / alphaCount > 0.6) {
+    return rawTitle
+      .toLowerCase()
+      .split(' ')
+      .map(w => w.charAt(0).toLocaleUpperCase('tr-TR') + w.slice(1))
+      .join(' ');
+  }
+  return rawTitle;
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -50,6 +65,7 @@ export async function POST(request: Request) {
     const priceFormatted = price ? new Intl.NumberFormat('tr-TR').format(price) + ' ' + (currency || 'TL') : '-';
     const locationFormatted = [city, district].filter(Boolean).join(' / ') || '-';
     const brandModelFormatted = [brand, model].filter(Boolean).join(' ') || '-';
+    const subjectTitle = formatSubjectTitle(title);
 
     // Logo embedding: use CID attachment if local file exists, otherwise fallback to remote URL
     const logoPath = path.join(process.cwd(), 'public/assets/logo.png');
@@ -59,11 +75,37 @@ export async function POST(request: Request) {
       ? [{ filename: 'logo.png', path: logoPath, cid: 'site-logo' }]
       : [];
 
+    const commonHeaders = {
+      'X-Mailer': 'satiliktekne.com Notification System',
+      'X-Priority': '3',
+      'Precedence': 'bulk',
+      'Auto-Submitted': 'auto-generated'
+    };
+
     // ─────────────────────────────────────────────────────────────
     // CASE 1: NEW LISTING SUBMITTED (ONAY BEKLİYOR)
     // ─────────────────────────────────────────────────────────────
     if (action === 'new_listing') {
       // 1. Email to Admin (yachting@cmx.com.tr)
+      const adminText = `satiliktekne.com - Yeni İlan Onay Bekliyor
+
+Platformda yeni bir ilan girişi yapıldı.
+
+İlan Başlığı: ${title || 'Başlıksız İlan'}
+İlan Türü: ${type === 'sale' ? 'Satılık' : 'Kiralık'}
+Kategori: ${category || '-'}
+Marka / Model: ${brandModelFormatted}
+${year ? `Model Yılı: ${year}\n` : ''}Fiyat: ${priceFormatted}
+Konum: ${locationFormatted}
+İlan Sahibi: ${userName}
+${userPhone ? `Telefon: ${userPhone}\n` : ''}${userEmail ? `E-posta: ${userEmail}\n` : ''}
+Admin Panelinde İncele ve Onayla:
+${adminLink}
+
+--
+Bu e-posta satiliktekne.com yönetim paneli bildirim sistemi tarafından otomatik gönderilmiştir.
+`;
+
       const adminMailHtml = `
         <!DOCTYPE html>
         <html>
@@ -133,16 +175,38 @@ export async function POST(request: Request) {
 
       await transporter.sendMail({
         from: `"satiliktekne.com" <${authUser}>`,
-        replyTo: userEmail || adminEmail,
+        replyTo: adminEmail,
         to: adminEmail,
-        subject: `🚤 Yeni İlan Onay Bekliyor: ${title || 'İlan'}`,
+        subject: `[satiliktekne.com] Yeni İlan Onay Bekliyor: ${subjectTitle || 'İlan'}`,
+        text: adminText,
         html: adminMailHtml,
+        headers: commonHeaders,
         attachments
       });
       console.log(`Admin notification email sent successfully to ${adminEmail} for: "${title}"`);
 
       // 2. Email to User (Submitter Confirmation)
       if (userEmail) {
+        const userText = `satiliktekne.com - İlanınız Alındı
+
+Sayın ${userName},
+
+"${title}" başlıklı ilanınız başarıyla oluşturulmuş ve değerlendirilmek üzere editörlerimize iletilmiştir.
+
+İlan Özeti:
+- İlan Başlığı: ${title}
+- Kategori: ${category || '-'}
+- Marka / Model: ${brandModelFormatted}
+- Fiyat: ${priceFormatted}
+- Konum: ${locationFormatted}
+
+İlanınız editörlerimiz tarafından incelendikten sonra en kısa sürede onaylanarak yayına alınacaktır. Yayına alındığında tarafınıza tekrar bilgilendirme yapılacaktır.
+
+Sorularınız için bizimle ${adminEmail} adresinden iletişime geçebilirsiniz.
+
+satiliktekne.com ekibi
+`;
+
         const userMailHtml = `
           <!DOCTYPE html>
           <html>
@@ -207,8 +271,10 @@ export async function POST(request: Request) {
           from: `"satiliktekne.com" <${authUser}>`,
           replyTo: adminEmail,
           to: userEmail,
-          subject: `⚓ İlanınız Başarıyla Alındı (Onay Sürecinde) - satiliktekne.com`,
+          subject: `[satiliktekne.com] İlanınız Alındı (Onay Sürecinde): ${subjectTitle || 'İlan'}`,
+          text: userText,
           html: userMailHtml,
+          headers: commonHeaders,
           attachments
         });
         console.log(`User confirmation email sent successfully to ${userEmail}`);
@@ -221,6 +287,18 @@ export async function POST(request: Request) {
     // CASE 2: LISTING APPROVED (ONAYLANDI BİLDİRİMİ)
     // ─────────────────────────────────────────────────────────────
     if (action === 'listing_approved' && userEmail) {
+      const approvedText = `satiliktekne.com - İlanınız Yayında!
+
+Sayın ${userName},
+
+Harika bir haber! "${title}" başlıklı ilanınız editörlerimiz tarafından incelenmiş ve onaylanarak sitemizde yayına alınmıştır.
+
+İlanınızı görüntülemek için:
+${listingLink}
+
+satiliktekne.com ekibi olarak bol kazançlı satışlar dileriz!
+`;
+
       const approvedMailHtml = `
         <!DOCTYPE html>
         <html>
@@ -247,7 +325,7 @@ export async function POST(request: Request) {
                   </a>
                 </td>
                 <td style="vertical-align: middle; text-align: right; padding: 0;">
-                  <span class="badge">🎉 İlanınız Yayında</span>
+                  <span class="badge">İlanınız Yayında</span>
                 </td>
               </tr>
             </table>
@@ -276,8 +354,10 @@ export async function POST(request: Request) {
         from: `"satiliktekne.com" <${authUser}>`,
         replyTo: adminEmail,
         to: userEmail,
-        subject: `🎉 Tebrikler! İlanınız Onaylandı ve Yayında - satiliktekne.com`,
+        subject: `[satiliktekne.com] İlanınız Onaylandı ve Yayında: ${subjectTitle || 'İlan'}`,
+        text: approvedText,
         html: approvedMailHtml,
+        headers: commonHeaders,
         attachments
       });
       console.log(`Approval email sent successfully to ${userEmail} for listing: "${title}"`);
