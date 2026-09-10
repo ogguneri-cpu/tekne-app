@@ -111,6 +111,7 @@ export default function EditListingPage({ params }: EditListingPageProps) {
   const [fuelType, setFuelType] = useState('');
   const [engineHours, setEngineHours] = useState('');
   const [flag, setFlag] = useState('Türkiye');
+  const [customFlag, setCustomFlag] = useState('');
   const [sellerType, setSellerType] = useState('owner');
   const [condition, setCondition] = useState('used');
   const [isSwap, setIsSwap] = useState(false);
@@ -194,7 +195,19 @@ export default function EditListingPage({ params }: EditListingPageProps) {
       setEngineBrand(listing.engine_brand || '');
       setFuelType(listing.fuel_type || '');
       setEngineHours(listing.engine_hours ? String(listing.engine_hours) : '');
-      setFlag(listing.flag || 'Türkiye');
+      const standardFlags = ['Türkiye', 'İngiltere', 'ABD', 'Almanya', 'Fransa', 'İtalya', 'Yunanistan', 'Hollanda', 'Norveç', 'Malta', 'Cayman Adaları', 'Marshall Adaları'];
+        if (listing.flag) {
+          if (standardFlags.includes(listing.flag)) {
+            setFlag(listing.flag);
+            setCustomFlag('');
+          } else {
+            setFlag('Diğer');
+            setCustomFlag(listing.flag);
+          }
+        } else {
+          setFlag('Türkiye');
+          setCustomFlag('');
+        }
       setSellerType(listing.seller_type || 'owner');
       setCondition(listing.condition || 'used');
       setIsSwap(!!listing.is_swap);
@@ -322,7 +335,7 @@ export default function EditListingPage({ params }: EditListingPageProps) {
         engine_brand: engineBrand || null,
         fuel_type: fuelType || null,
         engine_hours: engineHours ? Number(engineHours) : null,
-        flag: flag || 'Türkiye',
+        flag: flag === 'Diğer' ? (customFlag.trim() || 'Diğer') : (flag || 'Türkiye'),
         seller_type: sellerType,
         condition: condition,
         is_swap: isSwap,
@@ -631,6 +644,41 @@ export default function EditListingPage({ params }: EditListingPageProps) {
                     onChange={(e) => setEngineCount(e.target.value)}
                     style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)', outline: 'none' }}
                   />
+                </div>
+                <div className="form-group" style={{ flex: '1 1 200px' }}>
+                  <label htmlFor="edit-flag" style={{ display: 'block', marginBottom: '6px', fontWeight: 600, fontSize: '0.95rem' }}>Bandıra</label>
+                  <select 
+                    id="edit-flag"
+                    value={flag}
+                    onChange={(e) => setFlag(e.target.value)}
+                    style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)' }}
+                  >
+                    {['Türkiye', 'İngiltere', 'ABD', 'Almanya', 'Fransa', 'İtalya', 'Yunanistan', 'Hollanda', 'Norveç', 'Malta', 'Cayman Adaları', 'Marshall Adaları', 'Diğer'].map(fl => (
+                      <option key={fl} value={fl}>{fl}</option>
+                    ))}
+                  </select>
+                  {flag === 'Diğer' && (
+                    <div style={{ marginTop: '8px' }}>
+                      <input
+                        type="text"
+                        id="edit-custom-flag"
+                        placeholder="Hangi Ülke? (Ülke adını yazınız)"
+                        value={customFlag}
+                        onChange={(e) => setCustomFlag(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '12px 16px',
+                          borderRadius: '12px',
+                          border: '1px solid var(--color-primary)',
+                          background: 'var(--bg-body)',
+                          color: 'var(--text-primary)',
+                          fontSize: '0.95rem',
+                          outline: 'none'
+                        }}
+                        autoFocus
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
 
