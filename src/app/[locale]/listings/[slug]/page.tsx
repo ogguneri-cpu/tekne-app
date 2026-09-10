@@ -361,12 +361,100 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
 
           {/* ── Top Section: Gallery + Sidebar ── */}
           <div className="sahib-top container">
-            {/* Gallery (left) */}
-            <div className="sahib-gallery">
-              <DetailGallery images={listing.images || []} alt={displayTitle} />
+            {/* Left Column: Gallery + Title directly below + Specs + Description */}
+            <div className="sahib-main-content">
+              {/* Gallery */}
+              <div className="sahib-gallery">
+                <DetailGallery images={listing.images || []} alt={displayTitle} />
+              </div>
+
+              {/* Title, Badges & Location (Directly below photo) */}
+              <div className="sahib-title-block" style={{ marginTop: '1.5rem', marginBottom: '1.5rem' }}>
+                <div className="sahib-badges" style={{ marginBottom: '0.75rem' }}>
+                  <span className="badge badge-category">{catInfo.icon} {t(catInfo.label)}</span>
+                  <span className="badge badge-type">
+                    {listing.type === 'sale' ? '🏷️ ' + t('Satılık') : '📅 ' + t('Kiralık')}
+                  </span>
+                  {listing.condition && (
+                    <span className="badge badge-condition">
+                      {t(listing.condition === 'sifir' ? 'Sıfır' : 'İkinci El')}
+                    </span>
+                  )}
+                  {listing.is_swap && (
+                    <span className="badge badge-swap">🔄 {t('Takaslı')}</span>
+                  )}
+                </div>
+
+                <h1 className="sahib-title" style={{ margin: '0 0 0.5rem 0', fontSize: '1.65rem', lineHeight: '1.3' }}>{displayTitle}</h1>
+                <p className="sahib-location" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                    <circle cx="12" cy="10" r="3" />
+                  </svg>
+                  {[listing.location_ilce, listing.location_il].filter(Boolean).join(', ') || t('Belirtilmemiş')}
+                </p>
+              </div>
+
+              {/* Specs Table */}
+              <div className="sahib-specs-section">
+                <h2>{t('Tekne Özellikleri')}</h2>
+                <table className="sahib-specs-table">
+                  <tbody>
+                    <SpecRow label={t('Marka')} value={listing.brand} />
+                    <SpecRow label={t('Model')} value={listing.model} />
+                    <SpecRow label={t('Model Yılı')} value={listing.year} />
+                    <SpecRow label={t('Boy')} value={listing.length_meters ? `${listing.length_meters} ${t('metre')}` : null} />
+                    <SpecRow label={t('En')} value={listing.beam_meters ? `${listing.beam_meters} ${t('metre')}` : null} />
+                    <SpecRow label={t('Kategori')} value={t(catInfo.label)} />
+                    <SpecRow label={t('Gövde Malzemesi')} value={listing.hull_material} />
+                    <SpecRow label={t('Kamara Sayısı')} value={listing.cabin_count} />
+                    <SpecRow label={t('Motor Gücü')} value={listing.engine_power ? `${listing.engine_power} HP` : null} />
+                    <SpecRow label={t('Motor Markası')} value={listing.engine_brand} />
+                    <SpecRow label={t('Çalışma Saati')} value={listing.engine_hours ? listing.engine_hours.toLocaleString('tr-TR') : null} />
+                    <SpecRow label={t('Bandıra')} value={listing.flag} />
+                    <SpecRow label={t('Durumu')} value={listing.condition === 'sifir' ? t('Sıfır') : t('İkinci El')} />
+                    <SpecRow label={t('Kimden')} value={t(SELLER_TYPE_MAP[listing.seller_type || 'owner'] || 'Sahibinden')} />
+                    <SpecRow label={t('Takas')} value={listing.is_swap ? t('Evet') : t('Hayır')} />
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Description */}
+              <div className="sahib-desc-section">
+                <h2>{t('İlan Açıklaması')}</h2>
+                <div 
+                  className="sahib-desc-text"
+                  dangerouslySetInnerHTML={{ __html: cleanDescription }}
+                />
+              </div>
+
+              {/* Features Checklist */}
+              {listing.features && Object.keys(listing.features).length > 0 && (
+                <div className="sahib-features-section">
+                  <h2>{t('Donanım ve Ekipmanlar')}</h2>
+                  {Object.entries(listing.features).map(([catKey, items]: any) => {
+                    if (!Array.isArray(items) || items.length === 0) return null;
+                    return (
+                      <div key={catKey} className="sahib-feat-cat">
+                        <h3 className="sahib-feat-cat-title">
+                          {t(FEATURES_SCHEMA[catKey] || catKey)}
+                        </h3>
+                        <div className="sahib-feat-grid">
+                          {items.map((item: string) => (
+                            <div key={item} className="sahib-feat-item active">
+                              <span className="sahib-feat-check">✓</span>
+                              <span className="sahib-feat-label">{item}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
-            {/* Sidebar (right) */}
+            {/* Right Column: Sticky Sidebar with Price Card */}
             <div className="sahib-sidebar">
               {/* Price card */}
               <div className="sahib-price-card">
@@ -539,7 +627,7 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
                 )}
               </div>
 
-              {/* Quick Specs (right desktop sidebar) */}
+              {/* Quick Specs */}
               <div className="sahib-quick-specs" style={{ marginTop: '1rem' }}>
                 <div className="sahib-qs-item">
                   <span className="sahib-qs-label">{t('İlan No')}</span>
@@ -557,93 +645,6 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
                 </div>
               </div>
             </div>
-          </div>
-
-          {/* ── İlan Açıklaması Section ── */}
-          <div className="sahib-body container">
-            {/* Badges */}
-            <div className="sahib-badges">
-              <span className="badge badge-category">{catInfo.icon} {t(catInfo.label)}</span>
-              <span className="badge badge-type">
-                {listing.type === 'sale' ? '🏷️ ' + t('Satılık') : '📅 ' + t('Kiralık')}
-              </span>
-              {listing.condition && (
-                <span className="badge badge-condition">
-                  {t(listing.condition === 'sifir' ? 'Sıfır' : 'İkinci El')}
-                </span>
-              )}
-              {listing.is_swap && (
-                <span className="badge badge-swap">🔄 {t('Takaslı')}</span>
-              )}
-            </div>
-
-            {/* Title */}
-            <h1 className="sahib-title">{displayTitle}</h1>
-            <p className="sahib-location">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                <circle cx="12" cy="10" r="3" />
-              </svg>
-              {[listing.location_ilce, listing.location_il].filter(Boolean).join(', ') || t('Belirtilmemiş')}
-            </p>
-
-            {/* Specs Table */}
-            <div className="sahib-specs-section">
-              <h2>{t('Tekne Özellikleri')}</h2>
-              <table className="sahib-specs-table">
-                <tbody>
-                  <SpecRow label={t('Marka')} value={listing.brand} />
-                  <SpecRow label={t('Model')} value={listing.model} />
-                  <SpecRow label={t('Model Yılı')} value={listing.year} />
-                  <SpecRow label={t('Boy')} value={listing.length_meters ? `${listing.length_meters} ${t('metre')}` : null} />
-                  <SpecRow label={t('En')} value={listing.beam_meters ? `${listing.beam_meters} ${t('metre')}` : null} />
-                  <SpecRow label={t('Kategori')} value={t(catInfo.label)} />
-                  <SpecRow label={t('Gövde Malzemesi')} value={listing.hull_material} />
-                  <SpecRow label={t('Kamara Sayısı')} value={listing.cabin_count} />
-                  <SpecRow label={t('Motor Gücü')} value={listing.engine_power ? `${listing.engine_power} HP` : null} />
-                  <SpecRow label={t('Motor Markası')} value={listing.engine_brand} />
-                  <SpecRow label={t('Çalışma Saati')} value={listing.engine_hours ? listing.engine_hours.toLocaleString('tr-TR') : null} />
-                  <SpecRow label={t('Bandıra')} value={listing.flag} />
-                  <SpecRow label={t('Durumu')} value={listing.condition === 'sifir' ? t('Sıfır') : t('İkinci El')} />
-                  <SpecRow label={t('Kimden')} value={t(SELLER_TYPE_MAP[listing.seller_type || 'owner'] || 'Sahibinden')} />
-                  <SpecRow label={t('Takas')} value={listing.is_swap ? t('Evet') : t('Hayır')} />
-                </tbody>
-              </table>
-            </div>
-
-            {/* Description */}
-            <div className="sahib-desc-section">
-              <h2>{t('İlan Açıklaması')}</h2>
-              <div 
-                className="sahib-desc-text"
-                dangerouslySetInnerHTML={{ __html: cleanDescription }}
-              />
-            </div>
-
-            {/* Features Checklist */}
-            {listing.features && Object.keys(listing.features).length > 0 && (
-              <div className="sahib-features-section">
-                <h2>{t('Donanım ve Ekipmanlar')}</h2>
-                {Object.entries(listing.features).map(([catKey, items]: any) => {
-                  if (!Array.isArray(items) || items.length === 0) return null;
-                  return (
-                    <div key={catKey} className="sahib-feat-cat">
-                      <h3 className="sahib-feat-cat-title">
-                        {t(FEATURES_SCHEMA[catKey] || catKey)}
-                      </h3>
-                      <div className="sahib-feat-grid">
-                        {items.map((item: string) => (
-                          <div key={item} className="sahib-feat-item active">
-                            <span className="sahib-feat-check">✓</span>
-                            <span className="sahib-feat-label">{item}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
           </div>
         </main>
 
