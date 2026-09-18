@@ -233,6 +233,7 @@ export default function CreateListingPage() {
   const [contactEmail, setContactEmail] = useState('');
   const [contactPhone, setContactPhone] = useState('');
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [isDraggingOverUpload, setIsDraggingOverUpload] = useState(false);
 
   const handleDragStart = (e: React.DragEvent, index: number) => {
     setDraggedIndex(index);
@@ -320,11 +321,11 @@ export default function CreateListingPage() {
     });
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files) return;
-    const files = Array.from(e.target.files);
-    
-    if (images.length + files.length > 30) {
+  const processFiles = async (files: File[]) => {
+    const imageFiles = files.filter(file => file.type.startsWith('image/'));
+    if (imageFiles.length === 0) return;
+
+    if (images.length + imageFiles.length > 30) {
       alert(t('En fazla 30 fotoğraf yükleyebilirsiniz') + '.');
       return;
     }
@@ -332,7 +333,7 @@ export default function CreateListingPage() {
     setLoading(true);
     try {
       const compressedFiles = await Promise.all(
-        files.map(async (file) => {
+        imageFiles.map(async (file) => {
           try {
             const compressedBlob = await compressImage(file);
             const newName = file.name.replace(/\.[^/.]+$/, "") + ".jpg";
@@ -344,14 +345,45 @@ export default function CreateListingPage() {
         })
       );
 
-      setImages([...images, ...compressedFiles]);
+      setImages(prev => [...prev, ...compressedFiles]);
       
       const newPreviews = compressedFiles.map(file => URL.createObjectURL(file));
-      setImagePreviews([...imagePreviews, ...newPreviews]);
+      setImagePreviews(prev => [...prev, ...newPreviews]);
     } catch (err) {
       console.error('Error in file upload processing:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files) return;
+    const files = Array.from(e.target.files);
+    await processFiles(files);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleUploadDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingOverUpload(true);
+  };
+
+  const handleUploadDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingOverUpload(false);
+  };
+
+  const handleUploadDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingOverUpload(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const files = Array.from(e.dataTransfer.files);
+      await processFiles(files);
     }
   };
 
@@ -1073,7 +1105,21 @@ export default function CreateListingPage() {
                     {t('Teknenizin fotoğraflarını yükleyin (en fazla 30 adet) — Sürükleyerek sıralayın, ilk fotoğraf kapak görseli olur')}
                   </p>
                   
-                  <div className="upload-area" style={{ border: '2px dashed #0066ff' }} onClick={handleUploadAreaClick}>
+                  <div 
+                    className={`upload-area ${isDraggingOverUpload ? 'dragover' : ''}`}
+                    style={{ 
+                      border: isDraggingOverUpload ? '2px dashed #0052cc' : '2px dashed #0066ff',
+                      backgroundColor: isDraggingOverUpload ? 'rgba(0, 102, 255, 0.08)' : 'var(--bg-body)',
+                      transform: isDraggingOverUpload ? 'scale(1.01)' : 'scale(1)',
+                      transition: 'all 0.2s ease',
+                      cursor: 'pointer'
+                    }} 
+                    onClick={handleUploadAreaClick}
+                    onDragOver={handleUploadDragOver}
+                    onDragEnter={handleUploadDragOver}
+                    onDragLeave={handleUploadDragLeave}
+                    onDrop={handleUploadDrop}
+                  >
                     <input 
                       type="file" 
                       ref={fileInputRef}
@@ -1082,13 +1128,15 @@ export default function CreateListingPage() {
                       style={{ display: 'none' }}
                       onChange={handleFileChange}
                     />
-                    <svg width="64" height="64" viewBox="0 0 24 24" fill="#1a1a1a" style={{ margin: '0 auto 1.5rem', display: 'block' }}>
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill={isDraggingOverUpload ? "#0066ff" : "#1a1a1a"} style={{ margin: '0 auto 1.5rem', display: 'block', transition: 'all 0.2s ease' }}>
                       <path d="M4 4h3l2-3h6l2 3h3a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H4a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3z" />
                       <circle cx="12" cy="13" r="4" fill="#fff" />
-                      <circle cx="12" cy="13" r="2.5" fill="#1a1a1a" />
+                      <circle cx="12" cy="13" r="2.5" fill={isDraggingOverUpload ? "#0066ff" : "#1a1a1a"} />
                       <rect x="7" y="5" width="2" height="1" fill="#ffcc00" />
                     </svg>
-                    <div className="upload-area-text">{t('Fotoğraf yüklemek için tıklayın veya sürükleyin')}</div>
+                    <div className="upload-area-text" style={{ color: isDraggingOverUpload ? 'var(--color-primary)' : 'inherit', fontWeight: isDraggingOverUpload ? 700 : 600 }}>
+                      {isDraggingOverUpload ? t('Fotoğrafları Buraya Bırakın') : t('Fotoğraf yüklemek için tıklayın veya sürükleyin')}
+                    </div>
                     <div className="upload-area-sub">{t('JPG, PNG — Maks 5MB/adet · Otomatik optimize edilir')}</div>
                   </div>
                   

@@ -144,6 +144,7 @@ export default function EditListingPage({ params }: EditListingPageProps) {
   const [currency, setCurrency] = useState('TRY');
   const [city, setCity] = useState('');
   const [district, setDistrict] = useState('');
+  const [isDraggingOverEdit, setIsDraggingOverEdit] = useState(false);
 
   const [selectedFeatures, setSelectedFeatures] = useState<Record<string, string[]>>({
     kamara: [],
@@ -281,17 +282,44 @@ export default function EditListingPage({ params }: EditListingPageProps) {
   };
 
   // Image inputs handling
+  const processEditFiles = (files: File[]) => {
+    const imageFiles = files.filter(f => f.type.startsWith('image/'));
+    if (imageFiles.length === 0) return;
+    if (currentImages.length + newFiles.length + imageFiles.length > 30) {
+      alert('Toplam en fazla 30 fotoğraf yükleyebilirsiniz.');
+      return;
+    }
+    setNewFiles(prev => [...prev, ...imageFiles]);
+    const newPreviews = imageFiles.map(file => URL.createObjectURL(file));
+    setNewFilePreviews(prev => [...prev, ...newPreviews]);
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const filesArr = Array.from(e.target.files);
-      if (currentImages.length + newFiles.length + filesArr.length > 30) {
-        alert('Toplam en fazla 30 fotoğraf yükleyebilirsiniz.');
-        return;
-      }
-      setNewFiles(prev => [...prev, ...filesArr]);
-      
-      const newPreviews = filesArr.map(file => URL.createObjectURL(file));
-      setNewFilePreviews(prev => [...prev, ...newPreviews]);
+      processEditFiles(filesArr);
+      e.target.value = '';
+    }
+  };
+
+  const handleEditDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingOverEdit(true);
+  };
+
+  const handleEditDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingOverEdit(false);
+  };
+
+  const handleEditDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingOverEdit(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      processEditFiles(Array.from(e.dataTransfer.files));
     }
   };
 
@@ -1001,26 +1029,28 @@ export default function EditListingPage({ params }: EditListingPageProps) {
                   </div>
                 )}
 
-                {/* Image Upload Input */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <label 
-                    htmlFor="edit-image-upload" 
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      padding: '10px 18px',
-                      background: 'var(--color-primary-light)',
-                      color: 'var(--color-primary)',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      fontSize: '0.9rem',
-                      fontWeight: 600,
-                      border: '1px dashed var(--color-primary)'
-                    }}
-                  >
-                    <Upload size={16} /> Fotoğraf Ekle
-                  </label>
+                {/* Image Upload Dropzone */}
+                <div 
+                  onDragOver={handleEditDragOver}
+                  onDragEnter={handleEditDragOver}
+                  onDragLeave={handleEditDragLeave}
+                  onDrop={handleEditDrop}
+                  onClick={() => document.getElementById('edit-image-upload')?.click()}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '10px',
+                    padding: '24px 16px',
+                    border: isDraggingOverEdit ? '2px dashed #0052cc' : '2px dashed var(--color-primary)',
+                    background: isDraggingOverEdit ? 'rgba(0, 102, 255, 0.08)' : 'var(--color-primary-light)',
+                    borderRadius: '12px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    textAlign: 'center'
+                  }}
+                >
                   <input
                     type="file"
                     id="edit-image-upload"
@@ -1029,7 +1059,12 @@ export default function EditListingPage({ params }: EditListingPageProps) {
                     onChange={handleFileChange}
                     style={{ display: 'none' }}
                   />
-                  <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Toplam en fazla 30 fotoğraf yükleyebilirsiniz.</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--color-primary)', fontWeight: 700, fontSize: '0.95rem' }}>
+                    <Upload size={18} /> {isDraggingOverEdit ? 'Fotoğrafları Buraya Bırakın' : 'Fotoğraf Ekle veya Buraya Sürükleyin'}
+                  </div>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                    JPG, PNG · Toplam en fazla 30 fotoğraf yükleyebilirsiniz.
+                  </span>
                 </div>
               </div>
 
