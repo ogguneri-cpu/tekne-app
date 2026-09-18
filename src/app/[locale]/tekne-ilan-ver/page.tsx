@@ -29,6 +29,28 @@ const POPULAR_BRANDS = [
   'Quicksilver', 'Bayliner', 'Mercury', 'Ferretti', 'Grand Soleil', 'Dufour'
 ];
 
+export const BOT_FLOOR_TYPES = [
+  'Ahşap Taban',
+  'Alüminyum Taban',
+  'Fiber Taban',
+  'Şişme Taban',
+  'Izgara Taban',
+  'Diğer'
+];
+
+export const BOT_CAPACITY_OPTIONS = [
+  '1 Kişilik',
+  '2 Kişilik',
+  '3 Kişilik',
+  '4 Kişilik',
+  '5 Kişilik',
+  '6 Kişilik',
+  '7 Kişilik',
+  '8 Kişilik',
+  '9 Kişilik',
+  '10+ Kişilik'
+];
+
 const FEATURES_SCHEMA = {
   kamara: {
     label: 'Kamara',
@@ -175,6 +197,8 @@ export default function CreateListingPage() {
   const [length, setLength] = useState('');
   const [beam, setBeam] = useState('');
   const [cabinCount, setCabinCount] = useState('');
+  const [floorType, setFloorType] = useState('');
+  const [capacity, setCapacity] = useState('');
   const [hullType, setHullType] = useState('');
   const [bodyMaterial, setBodyMaterial] = useState('');
   const [engineCount, setEngineCount] = useState('');
@@ -401,7 +425,11 @@ export default function CreateListingPage() {
         seller_type: sellerType === 'sahibinden' ? 'owner' : sellerType === 'magazadan' ? 'dealer' : 'company',
         condition: condition === 'sifir' ? 'new' : 'used',
         is_swap: isSwap,
-        features: selectedFeatures,
+        features: {
+          ...selectedFeatures,
+          ...(category === 'bot' && floorType ? { taban: floorType } : {}),
+          ...(category === 'bot' && capacity ? { kapasite: capacity } : {})
+        },
         images: uploadedUrls,
         thumbnail: uploadedUrls[0] || null,
         user_name: user.user_metadata?.full_name || 'Kullanıcı',
@@ -674,67 +702,135 @@ export default function CreateListingPage() {
                       </div>
                     </div>
 
-                    <div className="form-row" style={{ display: 'flex', gap: '1rem' }}>
-                      <div className="form-group" style={{ flex: 1 }}>
-                        <label htmlFor="create-cabin">{t('Kamara Sayısı')}</label>
-                        <select 
-                          id="create-cabin"
-                          value={cabinCount}
-                          onChange={(e) => setCabinCount(e.target.value)}
-                          style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)' }}
-                        >
-                          <option value="">{t('Seçin')}</option>
-                          {['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'].map(num => (
-                            <option key={num} value={num}>{num}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="form-group" style={{ flex: 1 }}>
-                        <label htmlFor="create-hull">{t('Gövde Tipi')}</label>
-                        <select 
-                          id="create-hull"
-                          value={hullType}
-                          onChange={(e) => setHullType(e.target.value)}
-                          style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)' }}
-                        >
-                          <option value="">{t('Seçin')}</option>
-                          {['Tek Gövde', 'Çift Gövde (Katamaran)', 'RIB', 'Trimaran'].map(h => (
-                            <option key={h} value={h}>{t(h)}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
+                    {category === 'bot' ? (
+                      <>
+                        <div className="form-row" style={{ display: 'flex', gap: '1rem' }}>
+                          <div className="form-group" style={{ flex: 1 }}>
+                            <label htmlFor="create-hull">{t('Gövde Tipi')}</label>
+                            <select 
+                              id="create-hull"
+                              value={hullType}
+                              onChange={(e) => setHullType(e.target.value)}
+                              style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)' }}
+                            >
+                              <option value="">{t('Seçin')}</option>
+                              {['Tek Gövde', 'Çift Gövde (Katamaran)', 'RIB', 'Trimaran'].map(h => (
+                                <option key={h} value={h}>{t(h)}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="form-group" style={{ flex: 1 }}>
+                            <label htmlFor="create-body">{t('Gövde Malzemesi')}</label>
+                            <select 
+                              id="create-body"
+                              value={bodyMaterial}
+                              onChange={(e) => setBodyMaterial(e.target.value)}
+                              style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)' }}
+                            >
+                              <option value="">{t('Seçin')}</option>
+                              {['Fiberglas', 'Ahşap', 'Alüminyum', 'Çelik', 'Karbon Fiber', 'PVC / Şişme', 'Polyester'].map(m => (
+                                <option key={m} value={m}>{t(m)}</option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
 
-                    <div className="form-row" style={{ display: 'flex', gap: '1rem' }}>
-                      <div className="form-group" style={{ flex: 1 }}>
-                        <label htmlFor="create-body">{t('Gövde Malzemesi')}</label>
-                        <select 
-                          id="create-body"
-                          value={bodyMaterial}
-                          onChange={(e) => setBodyMaterial(e.target.value)}
-                          style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)' }}
-                        >
-                          <option value="">{t('Seçin')}</option>
-                          {['Fiberglas', 'Ahşap', 'Alüminyum', 'Çelik', 'Karbon Fiber', 'PVC / Şişme', 'Polyester'].map(m => (
-                            <option key={m} value={m}>{t(m)}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="form-group" style={{ flex: 1 }}>
-                        <label htmlFor="create-engine-count">{t('Motor Adedi')}</label>
-                        <select 
-                          id="create-engine-count"
-                          value={engineCount}
-                          onChange={(e) => setEngineCount(e.target.value)}
-                          style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)' }}
-                        >
-                          <option value="">{t('Seçin')}</option>
-                          {['1', '2', '3', '4'].map(num => (
-                            <option key={num} value={num}>{num}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
+                        <div className="form-row" style={{ display: 'flex', gap: '1rem' }}>
+                          <div className="form-group" style={{ flex: 1 }}>
+                            <label htmlFor="create-floor">{t('Taban')} *</label>
+                            <select 
+                              id="create-floor"
+                              value={floorType}
+                              onChange={(e) => setFloorType(e.target.value)}
+                              style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)' }}
+                            >
+                              <option value="">{t('Seçiniz')}</option>
+                              {BOT_FLOOR_TYPES.map(f => (
+                                <option key={f} value={f}>{t(f)}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="form-group" style={{ flex: 1 }}>
+                            <label htmlFor="create-capacity">{t('Kapasite')}</label>
+                            <select 
+                              id="create-capacity"
+                              value={capacity}
+                              onChange={(e) => setCapacity(e.target.value)}
+                              style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)' }}
+                            >
+                              <option value="">{t('Seçiniz')}</option>
+                              {BOT_CAPACITY_OPTIONS.map(c => (
+                                <option key={c} value={c}>{t(c)}</option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="form-row" style={{ display: 'flex', gap: '1rem' }}>
+                          <div className="form-group" style={{ flex: 1 }}>
+                            <label htmlFor="create-cabin">{t('Kamara Sayısı')}</label>
+                            <select 
+                              id="create-cabin"
+                              value={cabinCount}
+                              onChange={(e) => setCabinCount(e.target.value)}
+                              style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)' }}
+                            >
+                              <option value="">{t('Seçin')}</option>
+                              {['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'].map(num => (
+                                <option key={num} value={num}>{num}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="form-group" style={{ flex: 1 }}>
+                            <label htmlFor="create-hull">{t('Gövde Tipi')}</label>
+                            <select 
+                              id="create-hull"
+                              value={hullType}
+                              onChange={(e) => setHullType(e.target.value)}
+                              style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)' }}
+                            >
+                              <option value="">{t('Seçin')}</option>
+                              {['Tek Gövde', 'Çift Gövde (Katamaran)', 'RIB', 'Trimaran'].map(h => (
+                                <option key={h} value={h}>{t(h)}</option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+
+                        <div className="form-row" style={{ display: 'flex', gap: '1rem' }}>
+                          <div className="form-group" style={{ flex: 1 }}>
+                            <label htmlFor="create-body">{t('Gövde Malzemesi')}</label>
+                            <select 
+                              id="create-body"
+                              value={bodyMaterial}
+                              onChange={(e) => setBodyMaterial(e.target.value)}
+                              style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)' }}
+                            >
+                              <option value="">{t('Seçin')}</option>
+                              {['Fiberglas', 'Ahşap', 'Alüminyum', 'Çelik', 'Karbon Fiber', 'PVC / Şişme', 'Polyester'].map(m => (
+                                <option key={m} value={m}>{t(m)}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="form-group" style={{ flex: 1 }}>
+                            <label htmlFor="create-engine-count">{t('Motor Adedi')}</label>
+                            <select 
+                              id="create-engine-count"
+                              value={engineCount}
+                              onChange={(e) => setEngineCount(e.target.value)}
+                              style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)' }}
+                            >
+                              <option value="">{t('Seçin')}</option>
+                              {['1', '2', '3', '4'].map(num => (
+                                <option key={num} value={num}>{num}</option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                      </>
+                    )}
 
                     <div className="form-row" style={{ display: 'flex', gap: '1rem' }}>
                       <div className="form-group" style={{ flex: 1 }}>
@@ -1122,7 +1218,14 @@ export default function CreateListingPage() {
                         <SpecRow label={t('Model Yılı')} value={year} />
                         <SpecRow label={t('Boy')} value={length ? `${length} m` : null} />
                         <SpecRow label={t('En')} value={beam ? `${beam} m` : null} />
-                        <SpecRow label={t('Kamara')} value={cabinCount} />
+                        {category === 'bot' ? (
+                          <>
+                            <SpecRow label={t('Taban')} value={floorType} />
+                            <SpecRow label={t('Kapasite')} value={capacity} />
+                          </>
+                        ) : (
+                          <SpecRow label={t('Kamara')} value={cabinCount} />
+                        )}
                         <SpecRow label={t('Gövde Tipi')} value={hullType} />
                         <SpecRow label={t('Gövde Malzemesi')} value={bodyMaterial} />
                         <SpecRow label={t('Motor Adedi')} value={engineCount} />

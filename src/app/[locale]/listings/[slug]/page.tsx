@@ -426,7 +426,15 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
                     <SpecRow label={t('En')} value={listing.beam_meters ? `${listing.beam_meters} ${t('metre')}` : null} />
                     <SpecRow label={t('Kategori')} value={t(catInfo.label)} />
                     <SpecRow label={t('Gövde Malzemesi')} value={listing.hull_material} />
-                    <SpecRow label={t('Kamara Sayısı')} value={listing.cabin_count} />
+                    {listing.features?.taban && (
+                      <SpecRow label={t('Taban')} value={t(listing.features.taban)} />
+                    )}
+                    {listing.features?.kapasite && (
+                      <SpecRow label={t('Kapasite')} value={t(listing.features.kapasite)} />
+                    )}
+                    {listing.category !== 'bot' && (
+                      <SpecRow label={t('Kamara Sayısı')} value={listing.cabin_count} />
+                    )}
                     <SpecRow label={t('Motor Gücü')} value={listing.engine_power ? `${listing.engine_power} HP` : null} />
                     <SpecRow label={t('Motor Markası')} value={listing.engine_brand} />
                     <SpecRow label={t('Çalışma Saati')} value={listing.engine_hours ? listing.engine_hours.toLocaleString('tr-TR') : null} />

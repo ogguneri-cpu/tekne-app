@@ -28,6 +28,28 @@ const POPULAR_BRANDS = [
   'Quicksilver', 'Bayliner', 'Mercury', 'Ferretti', 'Grand Soleil', 'Dufour'
 ];
 
+const BOT_FLOOR_TYPES = [
+  'Ahşap Taban',
+  'Alüminyum Taban',
+  'Fiber Taban',
+  'Şişme Taban',
+  'Izgara Taban',
+  'Diğer'
+];
+
+const BOT_CAPACITY_OPTIONS = [
+  '1 Kişilik',
+  '2 Kişilik',
+  '3 Kişilik',
+  '4 Kişilik',
+  '5 Kişilik',
+  '6 Kişilik',
+  '7 Kişilik',
+  '8 Kişilik',
+  '9 Kişilik',
+  '10+ Kişilik'
+];
+
 const FEATURES_SCHEMA = {
   kamara: {
     label: 'Kamara',
@@ -103,6 +125,8 @@ export default function EditListingPage({ params }: EditListingPageProps) {
   const [length, setLength] = useState('');
   const [beam, setBeam] = useState('');
   const [cabinCount, setCabinCount] = useState('');
+  const [floorType, setFloorType] = useState('');
+  const [capacity, setCapacity] = useState('');
   const [hullType, setHullType] = useState('');
   const [bodyMaterial, setBodyMaterial] = useState('');
   const [engineCount, setEngineCount] = useState('');
@@ -188,6 +212,8 @@ export default function EditListingPage({ params }: EditListingPageProps) {
       setLength(listing.length_m ? String(listing.length_m) : '');
       setBeam(listing.beam_m ? String(listing.beam_m) : '');
       setCabinCount(listing.cabin_count ? String(listing.cabin_count) : '');
+      setFloorType(listing.features?.taban || '');
+      setCapacity(listing.features?.kapasite || '');
       setHullType(listing.hull_material || '');
       setBodyMaterial(listing.hull_material || ''); // Map body material or hull material
       setEngineCount(listing.engine_count ? String(listing.engine_count) : '');
@@ -343,7 +369,11 @@ export default function EditListingPage({ params }: EditListingPageProps) {
         seller_type: sellerType,
         condition: condition,
         is_swap: isSwap,
-        features: selectedFeatures,
+        features: {
+          ...selectedFeatures,
+          ...(category === 'bot' && floorType ? { taban: floorType } : {}),
+          ...(category === 'bot' && capacity ? { kapasite: capacity } : {})
+        },
         images: finalImages,
         thumbnail: finalImages[0] || null,
         updated_at: new Date().toISOString()
@@ -602,6 +632,88 @@ export default function EditListingPage({ params }: EditListingPageProps) {
                   />
                 </div>
               </div>
+
+              {/* Hull and Cabin or Bot specs */}
+              <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                <div className="form-group" style={{ flex: '1 1 200px' }}>
+                  <label htmlFor="edit-hull" style={{ display: 'block', marginBottom: '6px', fontWeight: 600, fontSize: '0.95rem' }}>Gövde Tipi</label>
+                  <select 
+                    id="edit-hull"
+                    value={hullType}
+                    onChange={(e) => setHullType(e.target.value)}
+                    style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)', outline: 'none' }}
+                  >
+                    <option value="">Seçin</option>
+                    {['Tek Gövde', 'Çift Gövde (Katamaran)', 'RIB', 'Trimaran'].map(h => (
+                      <option key={h} value={h}>{h}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group" style={{ flex: '1 1 200px' }}>
+                  <label htmlFor="edit-body" style={{ display: 'block', marginBottom: '6px', fontWeight: 600, fontSize: '0.95rem' }}>Gövde Malzemesi</label>
+                  <select 
+                    id="edit-body"
+                    value={bodyMaterial}
+                    onChange={(e) => setBodyMaterial(e.target.value)}
+                    style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)', outline: 'none' }}
+                  >
+                    <option value="">Seçin</option>
+                    {['Fiberglas', 'Ahşap', 'Alüminyum', 'Çelik', 'Karbon Fiber', 'PVC / Şişme', 'Polyester'].map(m => (
+                      <option key={m} value={m}>{m}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {category === 'bot' ? (
+                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                  <div className="form-group" style={{ flex: '1 1 200px' }}>
+                    <label htmlFor="edit-floor" style={{ display: 'block', marginBottom: '6px', fontWeight: 600, fontSize: '0.95rem' }}>Taban *</label>
+                    <select 
+                      id="edit-floor"
+                      value={floorType}
+                      onChange={(e) => setFloorType(e.target.value)}
+                      style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)', outline: 'none' }}
+                    >
+                      <option value="">Seçiniz</option>
+                      {BOT_FLOOR_TYPES.map(f => (
+                        <option key={f} value={f}>{f}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-group" style={{ flex: '1 1 200px' }}>
+                    <label htmlFor="edit-capacity" style={{ display: 'block', marginBottom: '6px', fontWeight: 600, fontSize: '0.95rem' }}>Kapasite</label>
+                    <select 
+                      id="edit-capacity"
+                      value={capacity}
+                      onChange={(e) => setCapacity(e.target.value)}
+                      style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)', outline: 'none' }}
+                    >
+                      <option value="">Seçiniz</option>
+                      {BOT_CAPACITY_OPTIONS.map(c => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                  <div className="form-group" style={{ flex: '1 1 200px' }}>
+                    <label htmlFor="edit-cabin" style={{ display: 'block', marginBottom: '6px', fontWeight: 600, fontSize: '0.95rem' }}>Kamara Sayısı</label>
+                    <select 
+                      id="edit-cabin"
+                      value={cabinCount}
+                      onChange={(e) => setCabinCount(e.target.value)}
+                      style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)', outline: 'none' }}
+                    >
+                      <option value="">Seçin</option>
+                      {['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'].map(num => (
+                        <option key={num} value={num}>{num}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
 
               {/* Engine Details */}
               <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
