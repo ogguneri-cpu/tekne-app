@@ -155,10 +155,16 @@ export default function EditListingPage({ params }: EditListingPageProps) {
     elektrik: []
   });
 
+  interface GalleryItem {
+    id: string;
+    type: 'existing' | 'new';
+    url: string;
+    file?: File;
+  }
+
   // Image Management
-  const [currentImages, setCurrentImages] = useState<string[]>([]);
-  const [newFiles, setNewFiles] = useState<File[]>([]);
-  const [newFilePreviews, setNewFilePreviews] = useState<string[]>([]);
+  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
+  const [draggedPhotoIndex, setDraggedPhotoIndex] = useState<number | null>(null);
 
   // Fetch listing data
   useEffect(() => {
@@ -249,17 +255,40 @@ export default function EditListingPage({ params }: EditListingPageProps) {
 
       // Features
       if (listing.features) {
-        const feat = { ...selectedFeatures };
-        Object.keys(FEATURES_SCHEMA).forEach(cat => {
-          if (Array.isArray(listing.features[cat])) {
-            feat[cat] = listing.features[cat];
+        let parsedFeatures = listing.features;
+        if (typeof parsedFeatures === 'string') {
+          try {
+            parsedFeatures = JSON.parse(parsedFeatures);
+          } catch (e) {
+            console.error('Failed to parse features:', e);
           }
-        });
+        }
+        const feat: Record<string, string[]> = {
+          kamara: [],
+          mutfak: [],
+          guverte: [],
+          tanklar: [],
+          elektronik: [],
+          elektrik: []
+        };
+        if (parsedFeatures && typeof parsedFeatures === 'object') {
+          Object.keys(FEATURES_SCHEMA).forEach(cat => {
+            if (Array.isArray(parsedFeatures[cat])) {
+              feat[cat] = parsedFeatures[cat];
+            }
+          });
+        }
         setSelectedFeatures(feat);
       }
 
       // Images
-      setCurrentImages(listing.images || []);
+      if (Array.isArray(listing.images)) {
+        setGalleryItems(listing.images.map((url: string, idx: number) => ({
+          id: `existing-${idx}-${url}`,
+          type: 'existing',
+          url
+        })));
+      }
 
       setLoading(false);
     }
@@ -268,30 +297,33 @@ export default function EditListingPage({ params }: EditListingPageProps) {
 
   // Handle Feature Checkbox Change
   const handleFeatureToggle = (categoryKey: string, value: string) => {
-    const current = selectedFeatures[categoryKey] || [];
-    let updated;
-    if (current.includes(value)) {
-      updated = current.filter(item => item !== value);
-    } else {
-      updated = [...current, value];
-    }
-    setSelectedFeatures(prev => ({
-      ...prev,
-      [categoryKey]: updated
-    }));
+    setSelectedFeatures(prev => {
+      const current = prev[categoryKey] || [];
+      const updated = current.includes(value)
+        ? current.filter(item => item !== value)
+        : [...current, value];
+      return {
+        ...prev,
+        [categoryKey]: updated
+      };
+    });
   };
 
   // Image inputs handling
   const processEditFiles = (files: File[]) => {
     const imageFiles = files.filter(f => f.type.startsWith('image/'));
     if (imageFiles.length === 0) return;
-    if (currentImages.length + newFiles.length + imageFiles.length > 30) {
+    if (galleryItems.length + imageFiles.length > 30) {
       alert('Toplam en fazla 30 fotoğraf yükleyebilirsiniz.');
       return;
     }
-    setNewFiles(prev => [...prev, ...imageFiles]);
-    const newPreviews = imageFiles.map(file => URL.createObjectURL(file));
-    setNewFilePreviews(prev => [...prev, ...newPreviews]);
+    const newItems: GalleryItem[] = imageFiles.map((file, idx) => ({
+      id: `new-${Date.now()}-${idx}-${Math.random().toString(36).substring(2, 7)}`,
+      type: 'new',
+      url: URL.createObjectURL(file),
+      file
+    }));
+    setGalleryItems(prev => [...prev, ...newItems]);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -323,15 +355,45 @@ export default function EditListingPage({ params }: EditListingPageProps) {
     }
   };
 
-  // Remove selected new file
-  const removeNewFile = (index: number) => {
-    setNewFiles(newFiles.filter((_, i) => i !== index));
-    setNewFilePreviews(newFilePreviews.filter((_, i) => i !== index));
+  // Drag-and-drop reordering and cover photo
+  const handlePhotoDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedPhotoIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
   };
 
-  // Remove existing image
-  const removeCurrentImage = (index: number) => {
-    setCurrentImages(currentImages.filter((_, i) => i !== index));
+  const handlePhotoDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handlePhotoDrop = (e: React.DragEvent, targetIndex: number) => {
+    e.preventDefault();
+    if (draggedPhotoIndex === null || draggedPhotoIndex === targetIndex) return;
+
+    setGalleryItems(prev => {
+      const updated = [...prev];
+      const [dragged] = updated.splice(draggedPhotoIndex, 1);
+      updated.splice(targetIndex, 0, dragged);
+      return updated;
+    });
+    setDraggedPhotoIndex(null);
+  };
+
+  const handlePhotoDragEnd = () => {
+    setDraggedPhotoIndex(null);
+  };
+
+  const handleMakeCover = (index: number) => {
+    if (index === 0) return;
+    setGalleryItems(prev => {
+      const updated = [...prev];
+      const [selected] = updated.splice(index, 1);
+      updated.unshift(selected);
+      return updated;
+    });
+  };
+
+  const handleRemovePhoto = (index: number) => {
+    setGalleryItems(prev => prev.filter((_, i) => i !== index));
   };
 
   // Save changes
@@ -344,28 +406,32 @@ export default function EditListingPage({ params }: EditListingPageProps) {
     try {
       let uploadedUrls: string[] = [];
 
-      // 1. Upload new files if any
-      if (newFiles.length > 0) {
-        const promises = newFiles.map(async (file, i) => {
-          const path = `imported/${user.id}/${Date.now()}_${i}_${file.name.replace(/[^a-zA-Z0-9.]/g, '')}`;
-          const { error } = await supabase.storage
-            .from('boat-images')
-            .upload(path, file, { cacheControl: '3600', upsert: true });
+      if (galleryItems.length > 0) {
+        const promises = galleryItems.map(async (item, i) => {
+          if (item.type === 'existing') {
+            return item.url;
+          }
+          if (item.file) {
+            const path = `imported/${user.id}/${Date.now()}_${i}_${item.file.name.replace(/[^a-zA-Z0-9.]/g, '')}`;
+            const { error } = await supabase.storage
+              .from('boat-images')
+              .upload(path, item.file, { cacheControl: '3600', upsert: true });
 
-          if (error) throw error;
-          
-          const { data: { publicUrl } } = supabase.storage
-            .from('boat-images')
-            .getPublicUrl(path);
+            if (error) throw error;
             
-          return publicUrl;
+            const { data: { publicUrl } } = supabase.storage
+              .from('boat-images')
+              .getPublicUrl(path);
+              
+            return publicUrl;
+          }
+          return item.url;
         });
         
         uploadedUrls = await Promise.all(promises);
       }
 
-      // Combine current images and new images
-      const finalImages = [...currentImages, ...uploadedUrls];
+      const finalImages = uploadedUrls.filter(Boolean);
 
       // Parse price to integer
       const numericPrice = price ? Number(price.replace(/\./g, '')) : null;
@@ -957,77 +1023,14 @@ export default function EditListingPage({ params }: EditListingPageProps) {
 
               {/* Images Section */}
               <div className="form-group" style={{ borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>
-                <label style={{ display: 'block', marginBottom: '12px', fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)' }}>İlan Fotoğrafları</label>
-                
-                {/* Existing Images */}
-                {currentImages.length > 0 && (
-                  <div style={{ marginBottom: '1.5rem' }}>
-                    <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '8px' }}>Mevcut Yüklü Resimler (Görseli silmek için çöp kutusuna tıklayın):</p>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '10px' }}>
-                      {currentImages.map((url, i) => (
-                        <div key={url + i} style={{ position: 'relative', width: '100px', height: '75px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border)' }}>
-                          <img src={url} alt={`Mevcut görsel ${i+1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                          <button
-                            type="button"
-                            onClick={() => removeCurrentImage(i)}
-                            style={{
-                              position: 'absolute',
-                              top: '4px',
-                              right: '4px',
-                              background: 'rgba(255, 90, 95, 0.9)',
-                              color: '#fff',
-                              border: 'none',
-                              borderRadius: '4px',
-                              width: '24px',
-                              height: '24px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            <Trash2 size={12} />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* New Image Previews */}
-                {newFilePreviews.length > 0 && (
-                  <div style={{ marginBottom: '1.5rem' }}>
-                    <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '8px' }}>Yeni Eklenecek Resimler:</p>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '10px' }}>
-                      {newFilePreviews.map((url, i) => (
-                        <div key={url + i} style={{ position: 'relative', width: '100px', height: '75px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border)' }}>
-                          <img src={url} alt={`Yeni görsel ${i+1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                          <button
-                            type="button"
-                            onClick={() => removeNewFile(i)}
-                            style={{
-                              position: 'absolute',
-                              top: '4px',
-                              right: '4px',
-                              background: 'rgba(255, 90, 95, 0.9)',
-                              color: '#fff',
-                              border: 'none',
-                              borderRadius: '4px',
-                              width: '24px',
-                              height: '24px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            <Trash2 size={12} />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '8px' }}>
+                  <label style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)' }}>
+                    İlan Fotoğrafları ({galleryItems.length}/30)
+                  </label>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                    Fotoğrafları sürükleyerek sıralayabilirsiniz. İlk fotoğraf kapak görselidir.
+                  </span>
+                </div>
 
                 {/* Image Upload Dropzone */}
                 <div 
@@ -1041,14 +1044,15 @@ export default function EditListingPage({ params }: EditListingPageProps) {
                     flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: '10px',
+                    gap: '8px',
                     padding: '24px 16px',
                     border: isDraggingOverEdit ? '2px dashed #0052cc' : '2px dashed var(--color-primary)',
                     background: isDraggingOverEdit ? 'rgba(0, 102, 255, 0.08)' : 'var(--color-primary-light)',
                     borderRadius: '12px',
                     cursor: 'pointer',
                     transition: 'all 0.2s ease',
-                    textAlign: 'center'
+                    textAlign: 'center',
+                    marginBottom: '1.25rem'
                   }}
                 >
                   <input
@@ -1066,6 +1070,59 @@ export default function EditListingPage({ params }: EditListingPageProps) {
                     JPG, PNG · Toplam en fazla 30 fotoğraf yükleyebilirsiniz.
                   </span>
                 </div>
+
+                {/* Unified Draggable Photo Gallery Grid */}
+                {galleryItems.length > 0 && (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '12px', marginBottom: '1.5rem' }}>
+                    {galleryItems.map((item, i) => (
+                      <div 
+                        key={item.id} 
+                        draggable
+                        onDragStart={(e) => handlePhotoDragStart(e, i)}
+                        onDragOver={handlePhotoDragOver}
+                        onDragEnd={handlePhotoDragEnd}
+                        onDrop={(e) => handlePhotoDrop(e, i)}
+                        style={{ 
+                          position: 'relative', 
+                          aspectRatio: '4/3', 
+                          borderRadius: '10px', 
+                          overflow: 'hidden', 
+                          border: i === 0 ? '2.5px solid #0066ff' : '1px solid var(--border)',
+                          cursor: 'grab',
+                          boxShadow: i === 0 ? '0 2px 8px rgba(0, 102, 255, 0.25)' : 'none',
+                          transition: 'transform 0.15s ease'
+                        }}
+                      >
+                        <img src={item.url} alt={`Görsel ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        
+                        {/* Cover Badge or Make Cover Button */}
+                        {i === 0 ? (
+                          <span style={{ position: 'absolute', bottom: '6px', left: '6px', background: '#0066ff', color: '#fff', fontSize: '10px', padding: '3px 8px', borderRadius: '4px', fontWeight: 700, boxShadow: '0 2px 4px rgba(0,0,0,0.35)' }}>
+                            ★ Kapak
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleMakeCover(i)}
+                            style={{ position: 'absolute', bottom: '6px', left: '6px', background: 'rgba(0,0,0,0.7)', color: '#fff', fontSize: '10px', padding: '3px 8px', borderRadius: '4px', border: 'none', cursor: 'pointer', fontWeight: 600 }}
+                          >
+                            Kapak Yap
+                          </button>
+                        )}
+
+                        {/* Delete button */}
+                        <button 
+                          type="button" 
+                          style={{ position: 'absolute', top: '6px', right: '6px', background: 'rgba(239, 68, 68, 0.9)', color: '#fff', border: 'none', borderRadius: '50%', width: '22px', height: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '11px', boxShadow: '0 2px 4px rgba(0,0,0,0.3)' }}
+                          onClick={() => handleRemovePhoto(i)}
+                          title="Fotoğrafı Sil"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Features List */}
@@ -1076,20 +1133,58 @@ export default function EditListingPage({ params }: EditListingPageProps) {
                   {Object.entries(FEATURES_SCHEMA).map(([catKey, schema]) => (
                     <div key={catKey} className="feature-category-group" style={{ background: 'none', padding: 0, border: 'none' }}>
                       <h3 className="feature-category-title" style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '10px', color: 'var(--text-primary)' }}>{schema.label}</h3>
-                      <div className="feature-items-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '8px' }}>
+                      <div className="create-feat-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '8px' }}>
                         {schema.items.map(item => {
                           const isChecked = selectedFeatures[catKey]?.includes(item);
                           return (
-                            <label key={item} className={`feature-item-checkbox ${isChecked ? 'active' : ''}`} style={{ cursor: 'pointer' }}>
-                              <input 
-                                type="checkbox" 
-                                checked={isChecked}
-                                onChange={() => handleFeatureToggle(catKey, item)}
-                                style={{ display: 'none' }}
-                              />
-                              <span className="create-feat-check">{isChecked ? '✓' : ''}</span>
-                              <span className="create-feat-label">{item}</span>
-                            </label>
+                            <div 
+                              key={item} 
+                              className={`create-feat-item ${isChecked ? 'checked' : ''}`}
+                              onClick={() => handleFeatureToggle(catKey, item)}
+                              style={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: '10px', 
+                                padding: '10px 14px', 
+                                borderRadius: '10px', 
+                                cursor: 'pointer',
+                                background: isChecked ? 'rgba(34, 197, 94, 0.08)' : 'var(--bg-body)',
+                                border: isChecked ? '1.5px solid #22c55e' : '1px solid var(--border)',
+                                transition: 'all 0.2s ease',
+                                userSelect: 'none'
+                              }}
+                            >
+                              <span 
+                                className="create-feat-check"
+                                style={{
+                                  width: '20px',
+                                  height: '20px',
+                                  borderRadius: '5px',
+                                  border: isChecked ? '2px solid #22c55e' : '2px solid var(--border)',
+                                  background: isChecked ? '#22c55e' : 'transparent',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontSize: '0.75rem',
+                                  fontWeight: 700,
+                                  color: '#fff',
+                                  flexShrink: 0,
+                                  transition: 'all 0.2s ease'
+                                }}
+                              >
+                                {isChecked ? '✓' : ''}
+                              </span>
+                              <span 
+                                className="create-feat-label"
+                                style={{
+                                  fontSize: '0.85rem',
+                                  color: isChecked ? 'var(--text-primary)' : 'var(--text-muted)',
+                                  fontWeight: isChecked ? 600 : 400
+                                }}
+                              >
+                                {item}
+                              </span>
+                            </div>
                           );
                         })}
                       </div>
