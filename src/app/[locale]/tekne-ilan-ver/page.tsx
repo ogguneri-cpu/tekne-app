@@ -300,8 +300,8 @@ export default function CreateListingPage() {
     if (!e.target.files) return;
     const files = Array.from(e.target.files);
     
-    if (images.length + files.length > 20) {
-      alert(t('En fazla 20 fotoğraf yükleyebilirsiniz') + '.');
+    if (images.length + files.length > 30) {
+      alert(t('En fazla 30 fotoğraf yükleyebilirsiniz') + '.');
       return;
     }
 
@@ -974,7 +974,7 @@ export default function CreateListingPage() {
                 <>
                   <h2 className="step-title">{t('Fotoğraflar')}</h2>
                   <p className="step-subtitle">
-                    {t('Teknenizin fotoğraflarını yükleyin (en fazla 20 adet) — Sürükleyerek sıralayın, ilk fotoğraf kapak görseli olur')}
+                    {t('Teknenizin fotoğraflarını yükleyin (en fazla 30 adet) — Sürükleyerek sıralayın, ilk fotoğraf kapak görseli olur')}
                   </p>
                   
                   <div className="upload-area" style={{ border: '2px dashed #0066ff' }} onClick={handleUploadAreaClick}>

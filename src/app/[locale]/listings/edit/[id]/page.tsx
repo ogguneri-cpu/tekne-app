@@ -258,6 +258,10 @@ export default function EditListingPage({ params }: EditListingPageProps) {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const filesArr = Array.from(e.target.files);
+      if (currentImages.length + newFiles.length + filesArr.length > 30) {
+        alert('Toplam en fazla 30 fotoğraf yükleyebilirsiniz.');
+        return;
+      }
       setNewFiles(prev => [...prev, ...filesArr]);
       
       const newPreviews = filesArr.map(file => URL.createObjectURL(file));
@@ -913,7 +917,7 @@ export default function EditListingPage({ params }: EditListingPageProps) {
                     onChange={handleFileChange}
                     style={{ display: 'none' }}
                   />
-                  <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Toplam en fazla 20 fotoğraf yükleyebilirsiniz.</span>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Toplam en fazla 30 fotoğraf yükleyebilirsiniz.</span>
                 </div>
               </div>
 
