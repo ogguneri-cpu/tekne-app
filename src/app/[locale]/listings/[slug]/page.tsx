@@ -395,6 +395,16 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
                   <span className="badge badge-type">
                     {listing.type === 'sale' ? '🏷️ ' + t('Satılık') : '📅 ' + t('Kiralık')}
                   </span>
+                  {listing.type === 'rent' && listing.features?.captain && (
+                    <span className="badge badge-captain" style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#2563eb', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+                      🧑‍✈️ {t(listing.features.captain)}
+                    </span>
+                  )}
+                  {listing.type === 'rent' && listing.features?.max_guests && (
+                    <span className="badge badge-guests" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#059669', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                      👥 Max {listing.features.max_guests} {t('Kişi')}
+                    </span>
+                  )}
                   {listing.condition && (
                     <span className="badge badge-condition">
                       {t(listing.condition === 'sifir' ? 'Sıfır' : 'İkinci El')}
@@ -426,6 +436,20 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
                     <SpecRow label={t('Boy')} value={listing.length_meters ? `${listing.length_meters} ${t('metre')}` : null} />
                     <SpecRow label={t('En')} value={listing.beam_meters ? `${listing.beam_meters} ${t('metre')}` : null} />
                     <SpecRow label={t('Kategori')} value={t(catInfo.label)} />
+                    {listing.type === 'rent' && (
+                      <>
+                        {listing.features?.captain && (
+                          <SpecRow label={t('Kaptan Durumu')} value={t(listing.features.captain)} />
+                        )}
+                        {listing.features?.max_guests && (
+                          <SpecRow label={t('Maksimum Kişi')} value={`${listing.features.max_guests} ${t('Kişi')}`} />
+                        )}
+                        {(listing.features?.crew_count !== undefined && listing.features?.crew_count !== null && listing.features?.crew_count !== '') && (
+                          <SpecRow label={t('Personel Sayısı')} value={`${listing.features.crew_count} ${t('Kişi')}`} />
+                        )}
+                        <SpecRow label={t('Kabin Sayısı')} value={listing.cabin_count || listing.features?.cabin_count} />
+                      </>
+                    )}
                     <SpecRow label={t('Gövde Malzemesi')} value={listing.hull_material} />
                     {listing.features?.taban && (
                       <SpecRow label={t('Taban')} value={t(listing.features.taban)} />
@@ -433,7 +457,7 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
                     {listing.features?.kapasite && (
                       <SpecRow label={t('Kapasite')} value={t(listing.features.kapasite)} />
                     )}
-                    {listing.category !== 'bot' && (
+                    {listing.type !== 'rent' && listing.category !== 'bot' && (
                       <SpecRow label={t('Kamara Sayısı')} value={listing.cabin_count} />
                     )}
                     <SpecRow label={t('Motor Gücü')} value={listing.engine_power ? `${listing.engine_power} HP` : null} />

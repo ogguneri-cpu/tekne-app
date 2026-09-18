@@ -32,6 +32,7 @@ export interface Listing {
   thumbnail?: string;
   is_featured?: boolean;
   seller_type?: string;
+  features?: Record<string, any>;
 }
 
 const CATEGORY_MAP: Record<string, { label: string; icon: string }> = {
@@ -126,6 +127,16 @@ export default function ListingCard({ listing, isFavorited, onToggleFavorite }: 
             <span className="badge badge-category" style={{ background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', color: '#ffffff', border: 'none' }}>
               {categoryInfo.icon} {t(categoryInfo.label)}
             </span>
+            {listing.type === 'rent' && (
+              <span className="badge badge-type" style={{ background: '#2563eb', color: '#fff', border: 'none' }}>
+                📅 {t('Kiralık')}
+              </span>
+            )}
+            {listing.type === 'rent' && listing.features?.captain && (
+              <span className="badge" style={{ background: 'rgba(15, 23, 42, 0.65)', backdropFilter: 'blur(4px)', color: '#fff', border: 'none' }}>
+                🧑‍✈️ {t(listing.features.captain)}
+              </span>
+            )}
             {listing.condition === 'sifir' && (
               <span className="badge badge-condition">{t('Sıfır')}</span>
             )}

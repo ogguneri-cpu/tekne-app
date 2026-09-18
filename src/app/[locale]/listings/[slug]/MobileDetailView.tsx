@@ -91,11 +91,22 @@ export default function MobileDetailView({
           )}
         </div>
 
-        <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginTop: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-          
+        <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginTop: '6px', display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
           <span>{locationText}</span>
           <span style={{ margin: '0 4px', color: 'var(--border)' }}>•</span>
           <span>{t(catInfo.label)}</span>
+          {listing.type === 'rent' && (
+            <>
+              <span style={{ margin: '0 4px', color: 'var(--border)' }}>•</span>
+              <span style={{ color: '#2563eb', fontWeight: 600 }}>{listing.features?.captain ? t(listing.features.captain) : t('Kiralık')}</span>
+              {listing.features?.max_guests && (
+                <>
+                  <span style={{ margin: '0 4px', color: 'var(--border)' }}>•</span>
+                  <span>{listing.features.max_guests} {t('Kişi')}</span>
+                </>
+              )}
+            </>
+          )}
         </div>
       </div>
 
@@ -235,7 +246,35 @@ export default function MobileDetailView({
                     <td className="sahib-spec-value" style={{ padding: '10px 12px', fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.85rem' }}>{t(listing.features.kapasite)}</td>
                   </tr>
                 )}
-                {listing.cabin_count && listing.category !== 'bot' && (
+                {listing.type === 'rent' && (
+                  <>
+                    {listing.features?.captain && (
+                      <tr>
+                        <td className="sahib-spec-label" style={{ padding: '10px 12px', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.85rem' }}>{t('Kaptan Durumu')}</td>
+                        <td className="sahib-spec-value" style={{ padding: '10px 12px', fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.85rem' }}>{t(listing.features.captain)}</td>
+                      </tr>
+                    )}
+                    {listing.features?.max_guests && (
+                      <tr>
+                        <td className="sahib-spec-label" style={{ padding: '10px 12px', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.85rem' }}>{t('Maksimum Kişi')}</td>
+                        <td className="sahib-spec-value" style={{ padding: '10px 12px', fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.85rem' }}>{listing.features.max_guests} {t('Kişi')}</td>
+                      </tr>
+                    )}
+                    {(listing.features?.crew_count !== undefined && listing.features?.crew_count !== null && listing.features?.crew_count !== '') && (
+                      <tr>
+                        <td className="sahib-spec-label" style={{ padding: '10px 12px', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.85rem' }}>{t('Personel Sayısı')}</td>
+                        <td className="sahib-spec-value" style={{ padding: '10px 12px', fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.85rem' }}>{listing.features.crew_count} {t('Kişi')}</td>
+                      </tr>
+                    )}
+                    {(listing.cabin_count || listing.features?.cabin_count) && (
+                      <tr>
+                        <td className="sahib-spec-label" style={{ padding: '10px 12px', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.85rem' }}>{t('Kabin Sayısı')}</td>
+                        <td className="sahib-spec-value" style={{ padding: '10px 12px', fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.85rem' }}>{listing.cabin_count || listing.features?.cabin_count}</td>
+                      </tr>
+                    )}
+                  </>
+                )}
+                {listing.type !== 'rent' && listing.cabin_count && listing.category !== 'bot' && (
                   <tr>
                     <td className="sahib-spec-label" style={{ padding: '10px 12px', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.85rem' }}>{t('Kamara Sayısı')}</td>
                     <td className="sahib-spec-value" style={{ padding: '10px 12px', fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.85rem' }}>{listing.cabin_count}</td>

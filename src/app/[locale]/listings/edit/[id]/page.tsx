@@ -122,6 +122,9 @@ export default function EditListingPage({ params }: EditListingPageProps) {
   const [length, setLength] = useState('');
   const [beam, setBeam] = useState('');
   const [cabinCount, setCabinCount] = useState('');
+  const [captain, setCaptain] = useState('');
+  const [maxGuests, setMaxGuests] = useState('');
+  const [crewCount, setCrewCount] = useState('');
   const [floorType, setFloorType] = useState('');
   const [capacity, setCapacity] = useState('');
   const [hullType, setHullType] = useState('');
@@ -215,7 +218,10 @@ export default function EditListingPage({ params }: EditListingPageProps) {
       setYear(listing.year ? String(listing.year) : '');
       setLength(listing.length_m ? String(listing.length_m) : '');
       setBeam(listing.beam_m ? String(listing.beam_m) : '');
-      setCabinCount(listing.cabin_count ? String(listing.cabin_count) : '');
+      setCabinCount(listing.cabin_count ? String(listing.cabin_count) : (listing.features?.cabin_count ? String(listing.features.cabin_count) : ''));
+      setCaptain(listing.features?.captain || listing.features?.kaptan || '');
+      setMaxGuests(listing.features?.max_guests ? String(listing.features.max_guests) : (listing.features?.max_kisi ? String(listing.features.max_kisi) : ''));
+      setCrewCount(listing.features?.crew_count !== undefined && listing.features?.crew_count !== null ? String(listing.features.crew_count) : (listing.features?.personel_sayisi !== undefined && listing.features?.personel_sayisi !== null ? String(listing.features.personel_sayisi) : ''));
       setFloorType(listing.features?.taban || '');
       setCapacity(listing.features?.kapasite || '');
       setHullType(listing.hull_material || '');
@@ -469,7 +475,13 @@ export default function EditListingPage({ params }: EditListingPageProps) {
         features: {
           ...selectedFeatures,
           ...(category === 'bot' && floorType ? { taban: floorType } : {}),
-          ...(category === 'bot' && capacity ? { kapasite: capacity } : {})
+          ...(category === 'bot' && capacity ? { kapasite: capacity } : {}),
+          ...(type === 'rent' ? {
+            captain: captain || null,
+            max_guests: maxGuests ? Number(maxGuests) : null,
+            crew_count: crewCount !== '' ? Number(crewCount) : null,
+            cabin_count: cabinCount ? Number(cabinCount) : null
+          } : {})
         },
         images: finalImages,
         thumbnail: finalImages[0] || null,
@@ -742,6 +754,83 @@ export default function EditListingPage({ params }: EditListingPageProps) {
                 </div>
               </div>
 
+              {/* Rental Details if type === 'rent' */}
+              {type === 'rent' && (
+                <div style={{
+                  background: 'rgba(14, 165, 233, 0.04)',
+                  border: '1.5px solid rgba(14, 165, 233, 0.25)',
+                  borderRadius: '16px',
+                  padding: '1.25rem',
+                  marginBottom: '1rem'
+                }}>
+                  <h4 style={{ margin: '0 0 1rem 0', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1rem', fontWeight: 700, color: 'var(--primary, #0ea5e9)' }}>
+                    📅 Kiralama Detayları
+                  </h4>
+
+                  <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                    <div className="form-group" style={{ flex: '1 1 200px' }}>
+                      <label htmlFor="edit-captain" style={{ display: 'block', marginBottom: '6px', fontWeight: 600, fontSize: '0.95rem' }}>Kaptan Durumu</label>
+                      <select
+                        id="edit-captain"
+                        value={captain}
+                        onChange={(e) => setCaptain(e.target.value)}
+                        style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)', outline: 'none' }}
+                      >
+                        <option value="">Kaptan seçin</option>
+                        <option value="Kaptanlı">Kaptanlı</option>
+                        <option value="Kaptansız">Kaptansız</option>
+                        <option value="Kaptan Opsiyonel">Kaptan Opsiyonel</option>
+                      </select>
+                    </div>
+
+                    <div className="form-group" style={{ flex: '1 1 200px' }}>
+                      <label htmlFor="edit-max-guests" style={{ display: 'block', marginBottom: '6px', fontWeight: 600, fontSize: '0.95rem' }}>Maksimum Kişi (Kapasite)</label>
+                      <input
+                        type="number"
+                        id="edit-max-guests"
+                        min="1"
+                        max="200"
+                        placeholder="ör: 10"
+                        value={maxGuests}
+                        onChange={(e) => setMaxGuests(e.target.value)}
+                        style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)', outline: 'none' }}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '0.75rem' }}>
+                    <div className="form-group" style={{ flex: '1 1 200px' }}>
+                      <label htmlFor="edit-crew-count" style={{ display: 'block', marginBottom: '6px', fontWeight: 600, fontSize: '0.95rem' }}>Personel / Mürettebat Sayısı</label>
+                      <input
+                        type="number"
+                        id="edit-crew-count"
+                        min="0"
+                        max="50"
+                        placeholder="ör: 2 (Kaptan, Gemici vb.)"
+                        value={crewCount}
+                        onChange={(e) => setCrewCount(e.target.value)}
+                        style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)', outline: 'none' }}
+                      />
+                    </div>
+
+                    <div className="form-group" style={{ flex: '1 1 200px' }}>
+                      <label htmlFor="edit-rent-cabin" style={{ display: 'block', marginBottom: '6px', fontWeight: 600, fontSize: '0.95rem' }}>Kabin / Kamara Sayısı</label>
+                      <select
+                        id="edit-rent-cabin"
+                        value={cabinCount}
+                        onChange={(e) => setCabinCount(e.target.value)}
+                        style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)', outline: 'none' }}
+                      >
+                        <option value="">Seçin</option>
+                        {['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'].map(num => (
+                          <option key={num} value={num}>{num} Kabin</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Hull and Cabin or Bot specs */}
               <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
                 <div className="form-group" style={{ flex: '1 1 200px' }}>
@@ -806,22 +895,24 @@ export default function EditListingPage({ params }: EditListingPageProps) {
                   </div>
                 </div>
               ) : (
-                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                  <div className="form-group" style={{ flex: '1 1 200px' }}>
-                    <label htmlFor="edit-cabin" style={{ display: 'block', marginBottom: '6px', fontWeight: 600, fontSize: '0.95rem' }}>Kamara Sayısı</label>
-                    <select 
-                      id="edit-cabin"
-                      value={cabinCount}
-                      onChange={(e) => setCabinCount(e.target.value)}
-                      style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)', outline: 'none' }}
-                    >
-                      <option value="">Seçin</option>
-                      {['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'].map(num => (
-                        <option key={num} value={num}>{num}</option>
-                      ))}
-                    </select>
+                type !== 'rent' && (
+                  <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                    <div className="form-group" style={{ flex: '1 1 200px' }}>
+                      <label htmlFor="edit-cabin" style={{ display: 'block', marginBottom: '6px', fontWeight: 600, fontSize: '0.95rem' }}>Kamara Sayısı</label>
+                      <select 
+                        id="edit-cabin"
+                        value={cabinCount}
+                        onChange={(e) => setCabinCount(e.target.value)}
+                        style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)', outline: 'none' }}
+                      >
+                        <option value="">Seçin</option>
+                        {['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'].map(num => (
+                          <option key={num} value={num}>{num}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
-                </div>
+                )
               )}
 
               {/* Engine Details */}

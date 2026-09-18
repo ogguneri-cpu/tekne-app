@@ -194,6 +194,9 @@ export default function CreateListingPage() {
   const [length, setLength] = useState('');
   const [beam, setBeam] = useState('');
   const [cabinCount, setCabinCount] = useState('');
+  const [captain, setCaptain] = useState('');
+  const [maxGuests, setMaxGuests] = useState('');
+  const [crewCount, setCrewCount] = useState('');
   const [floorType, setFloorType] = useState('');
   const [capacity, setCapacity] = useState('');
   const [hullType, setHullType] = useState('');
@@ -461,7 +464,13 @@ export default function CreateListingPage() {
         features: {
           ...selectedFeatures,
           ...(category === 'bot' && floorType ? { taban: floorType } : {}),
-          ...(category === 'bot' && capacity ? { kapasite: capacity } : {})
+          ...(category === 'bot' && capacity ? { kapasite: capacity } : {}),
+          ...(type === 'rent' ? {
+            captain: captain || null,
+            max_guests: maxGuests ? Number(maxGuests) : null,
+            crew_count: crewCount !== '' ? Number(crewCount) : null,
+            cabin_count: cabinCount ? Number(cabinCount) : null
+          } : {})
         },
         images: uploadedUrls,
         thumbnail: uploadedUrls[0] || null,
@@ -748,6 +757,82 @@ export default function CreateListingPage() {
                       </div>
                     </div>
 
+                    {type === 'rent' && (
+                      <div style={{
+                        background: 'rgba(14, 165, 233, 0.04)',
+                        border: '1.5px solid rgba(14, 165, 233, 0.25)',
+                        borderRadius: '16px',
+                        padding: '1.25rem',
+                        marginBottom: '1.5rem'
+                      }}>
+                        <h4 style={{ margin: '0 0 1rem 0', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1rem', fontWeight: 700, color: 'var(--primary, #0ea5e9)' }}>
+                          📅 {t('Kiralama Detayları')}
+                        </h4>
+                        
+                        <div className="form-row" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                          <div className="form-group" style={{ flex: '1 1 200px' }}>
+                            <label htmlFor="create-captain">{t('Kaptan Durumu')}</label>
+                            <select
+                              id="create-captain"
+                              value={captain}
+                              onChange={(e) => setCaptain(e.target.value)}
+                              style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)' }}
+                            >
+                              <option value="">{t('Kaptan seçin')}</option>
+                              <option value="Kaptanlı">{t('Kaptanlı')}</option>
+                              <option value="Kaptansız">{t('Kaptansız')}</option>
+                              <option value="Kaptan Opsiyonel">{t('Kaptan Opsiyonel')}</option>
+                            </select>
+                          </div>
+
+                          <div className="form-group" style={{ flex: '1 1 200px' }}>
+                            <label htmlFor="create-max-guests">{t('Maksimum Kişi (Kapasite)')}</label>
+                            <input
+                              type="number"
+                              id="create-max-guests"
+                              min="1"
+                              max="200"
+                              placeholder="ör: 10"
+                              value={maxGuests}
+                              onChange={(e) => setMaxGuests(e.target.value)}
+                              style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)' }}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="form-row" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '0.75rem' }}>
+                          <div className="form-group" style={{ flex: '1 1 200px' }}>
+                            <label htmlFor="create-crew-count">{t('Personel / Mürettebat Sayısı')}</label>
+                            <input
+                              type="number"
+                              id="create-crew-count"
+                              min="0"
+                              max="50"
+                              placeholder="ör: 2 (Kaptan, Gemici vb.)"
+                              value={crewCount}
+                              onChange={(e) => setCrewCount(e.target.value)}
+                              style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)' }}
+                            />
+                          </div>
+
+                          <div className="form-group" style={{ flex: '1 1 200px' }}>
+                            <label htmlFor="create-rent-cabin">{t('Kabin / Kamara Sayısı')}</label>
+                            <select
+                              id="create-rent-cabin"
+                              value={cabinCount}
+                              onChange={(e) => setCabinCount(e.target.value)}
+                              style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)' }}
+                            >
+                              <option value="">{t('Seçin')}</option>
+                              {['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'].map(num => (
+                                <option key={num} value={num}>{num} {t('Kabin')}</option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     {category === 'bot' ? (
                       <>
                         <div className="form-row" style={{ display: 'flex', gap: '1rem' }}>
@@ -815,20 +900,22 @@ export default function CreateListingPage() {
                     ) : (
                       <>
                         <div className="form-row" style={{ display: 'flex', gap: '1rem' }}>
-                          <div className="form-group" style={{ flex: 1 }}>
-                            <label htmlFor="create-cabin">{t('Kamara Sayısı')}</label>
-                            <select 
-                              id="create-cabin"
-                              value={cabinCount}
-                              onChange={(e) => setCabinCount(e.target.value)}
-                              style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)' }}
-                            >
-                              <option value="">{t('Seçin')}</option>
-                              {['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'].map(num => (
-                                <option key={num} value={num}>{num}</option>
-                              ))}
-                            </select>
-                          </div>
+                          {type !== 'rent' && (
+                            <div className="form-group" style={{ flex: 1 }}>
+                              <label htmlFor="create-cabin">{t('Kamara Sayısı')}</label>
+                              <select 
+                                id="create-cabin"
+                                value={cabinCount}
+                                onChange={(e) => setCabinCount(e.target.value)}
+                                style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)' }}
+                              >
+                                <option value="">{t('Seçin')}</option>
+                                {['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'].map(num => (
+                                  <option key={num} value={num}>{num}</option>
+                                ))}
+                              </select>
+                            </div>
+                          )}
                           <div className="form-group" style={{ flex: 1 }}>
                             <label htmlFor="create-hull">{t('Gövde Tipi')}</label>
                             <select 
@@ -1280,13 +1367,23 @@ export default function CreateListingPage() {
                         <SpecRow label={t('Model Yılı')} value={year} />
                         <SpecRow label={t('Boy')} value={length ? `${length} m` : null} />
                         <SpecRow label={t('En')} value={beam ? `${beam} m` : null} />
-                        {category === 'bot' ? (
+                        {type === 'rent' && (
                           <>
-                            <SpecRow label={t('Taban')} value={floorType} />
-                            <SpecRow label={t('Kapasite')} value={capacity} />
+                            {captain && <SpecRow label={t('Kaptan Durumu')} value={t(captain)} />}
+                            {maxGuests && <SpecRow label={t('Maksimum Kişi')} value={`${maxGuests} ${t('Kişi')}`} />}
+                            {crewCount && <SpecRow label={t('Personel Sayısı')} value={`${crewCount} ${t('Kişi')}`} />}
+                            {cabinCount && <SpecRow label={t('Kabin Sayısı')} value={cabinCount} />}
                           </>
-                        ) : (
-                          <SpecRow label={t('Kamara')} value={cabinCount} />
+                        )}
+                        {type !== 'rent' && (
+                          category === 'bot' ? (
+                            <>
+                              <SpecRow label={t('Taban')} value={floorType} />
+                              <SpecRow label={t('Kapasite')} value={capacity} />
+                            </>
+                          ) : (
+                            <SpecRow label={t('Kamara')} value={cabinCount} />
+                          )
                         )}
                         <SpecRow label={t('Gövde Tipi')} value={hullType} />
                         <SpecRow label={t('Gövde Malzemesi')} value={bodyMaterial} />
