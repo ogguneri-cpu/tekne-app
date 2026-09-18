@@ -23,11 +23,7 @@ const CATEGORIES = [
   { value: 'diger', label: 'Diğer', icon: '🛶' }
 ];
 
-const POPULAR_BRANDS = [
-  'Azimut', 'Beneteau', 'Bavaria', 'Yamaha', 'Sea Ray', 'Jeanneau', 
-  'Princess', 'Sunseeker', 'Lagoon', 'Fountaine Pajot', 'Zodiac', 
-  'Quicksilver', 'Bayliner', 'Mercury', 'Ferretti', 'Grand Soleil', 'Dufour'
-];
+import { POPULAR_BRANDS } from '@/lib/constants/brands';
 
 export const BOT_FLOOR_TYPES = [
   'Ahşap Taban',
@@ -291,6 +287,10 @@ export default function CreateListingPage() {
       alert(t('Lütfen geçerli bir başlık girin (en az 5 karakter)') + '.');
       return;
     }
+    if (currentStep === 3 && brand === 'Diğer' && !customBrand.trim()) {
+      alert(locale === 'en' ? 'Please specify your boat brand name.' : 'Lütfen tekne markasını belirtiniz.');
+      return;
+    }
     if (currentStep === 4 && !price) {
       alert(t('Lütfen fiyat girin') + '.');
       return;
@@ -435,7 +435,7 @@ export default function CreateListingPage() {
         slug,
         description,
         category,
-        brand: brand === 'Diğer' ? customBrand : brand,
+        brand: brand === 'Diğer' ? (customBrand.trim() || 'Diğer') : brand,
         model: model || null,
         type,
         sale_price: type === 'sale' && price ? Number(price.replace(/\./g, '')) : null,
@@ -484,7 +484,7 @@ export default function CreateListingPage() {
           action: 'new_listing',
           title,
           category,
-          brand: brand === 'Diğer' ? customBrand : brand,
+          brand: brand === 'Diğer' ? (customBrand.trim() || 'Diğer') : brand,
           model: model || '',
           price: cleanPrice,
           currency,
@@ -654,36 +654,49 @@ export default function CreateListingPage() {
 
                     <div className="form-group">
                       <label htmlFor="create-brand">{t('Marka')}</label>
-                      <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                        <select 
-                          id="create-brand"
-                          value={brand}
-                          onChange={(e) => {
-                            setBrand(e.target.value);
-                            if (e.target.value !== 'Diğer') {
-                              setCustomBrand('');
-                            }
-                          }}
-                          style={{ flex: '1 1 200px', width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)' }}
-                        >
-                          <option value="">{t('Marka seçin')}</option>
-                          {POPULAR_BRANDS.map(b => (
-                            <option key={b} value={b}>{b}</option>
-                          ))}
-                          <option value="Diğer">{locale === 'en' ? 'Other' : 'Diğer'}</option>
-                        </select>
-                        
-                        {brand === 'Diğer' && (
+                      <select 
+                        id="create-brand"
+                        value={brand}
+                        onChange={(e) => {
+                          setBrand(e.target.value);
+                          if (e.target.value !== 'Diğer') {
+                            setCustomBrand('');
+                          }
+                        }}
+                        style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)' }}
+                      >
+                        <option value="">{t('Marka seçin')}</option>
+                        {POPULAR_BRANDS.map(b => (
+                          <option key={b} value={b}>{b}</option>
+                        ))}
+                        <option value="Diğer">{locale === 'en' ? 'Other (Type manually)' : 'Diğer (Elle Yazın)'}</option>
+                      </select>
+                      
+                      {brand === 'Diğer' && (
+                        <div style={{ marginTop: '8px' }}>
                           <input 
                             type="text"
-                            placeholder={locale === 'en' ? 'Enter boat brand' : 'Tekne markasını yazınız'}
+                            id="create-custom-brand"
+                            placeholder={locale === 'en' ? 'Enter boat brand name...' : 'Tekne markasını yazınız (ör: Safter, Yerliyurt, Özel Yapım...)'}
                             value={customBrand}
                             onChange={(e) => setCustomBrand(e.target.value)}
                             required
-                            style={{ flex: '1 1 200px', width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)', boxSizing: 'border-box' }}
+                            autoFocus
+                            style={{ 
+                              width: '100%', 
+                              padding: '12px 16px', 
+                              borderRadius: '12px', 
+                              border: '1.5px solid var(--primary, #0ea5e9)', 
+                              background: 'var(--bg-body)', 
+                              color: 'var(--text-primary)', 
+                              boxSizing: 'border-box',
+                              fontSize: '0.95rem',
+                              outline: 'none',
+                              boxShadow: '0 0 0 3px rgba(14, 165, 233, 0.15)'
+                            }}
                           />
-                        )}
-                      </div>
+                        </div>
+                      )}
                     </div>
 
                     <div className="form-row" style={{ display: 'flex', gap: '1rem' }}>
@@ -1261,7 +1274,7 @@ export default function CreateListingPage() {
 
                     <table className="sahib-specs-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
                       <tbody>
-                        <SpecRow label={t('Marka')} value={brand} />
+                        <SpecRow label={t('Marka')} value={brand === 'Diğer' ? (customBrand.trim() || 'Diğer') : brand} />
                         <SpecRow label={t('Model')} value={model} />
                         <SpecRow label={t('Model Yılı')} value={year} />
                         <SpecRow label={t('Boy')} value={length ? `${length} m` : null} />

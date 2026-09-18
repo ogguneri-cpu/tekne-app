@@ -22,11 +22,7 @@ const CATEGORIES = [
   { value: 'diger', label: 'Diğer', icon: '🛶' }
 ];
 
-const POPULAR_BRANDS = [
-  'Azimut', 'Beneteau', 'Bavaria', 'Yamaha', 'Sea Ray', 'Jeanneau', 
-  'Princess', 'Sunseeker', 'Lagoon', 'Fountaine Pajot', 'Zodiac', 
-  'Quicksilver', 'Bayliner', 'Mercury', 'Ferretti', 'Grand Soleil', 'Dufour'
-];
+import { POPULAR_BRANDS } from '@/lib/constants/brands';
 
 const BOT_FLOOR_TYPES = [
   'Ahşap Taban',
@@ -400,6 +396,12 @@ export default function EditListingPage({ params }: EditListingPageProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
+
+    if (brand === 'Diğer' && !customBrand.trim()) {
+      alert('Lütfen tekne markasını belirtiniz.');
+      return;
+    }
+
     setSaveLoading(true);
     setErrorMsg('');
 
@@ -441,7 +443,7 @@ export default function EditListingPage({ params }: EditListingPageProps) {
         title,
         description,
         category,
-        brand: brand === 'Diğer' ? customBrand : brand,
+        brand: brand === 'Diğer' ? (customBrand.trim() || 'Diğer') : brand,
         model: model || null,
         type,
         sale_price: type === 'sale' ? numericPrice : null,
@@ -661,16 +663,28 @@ export default function EditListingPage({ params }: EditListingPageProps) {
                       {POPULAR_BRANDS.map(b => (
                         <option key={b} value={b}>{b}</option>
                       ))}
-                      <option value="Diğer">Diğer</option>
+                      <option value="Diğer">Diğer (Elle Yazın)</option>
                     </select>
                     {brand === 'Diğer' && (
                       <input
                         type="text"
-                        placeholder="Tekne markasını yazınız"
+                        placeholder="Tekne markasını yazınız (ör: Safter, Yerliyurt, Özel Yapım...)"
                         value={customBrand}
                         onChange={(e) => setCustomBrand(e.target.value)}
                         required
-                        style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-body)', color: 'var(--text-primary)', outline: 'none', boxSizing: 'border-box' }}
+                        autoFocus
+                        style={{ 
+                          width: '100%', 
+                          padding: '12px 16px', 
+                          borderRadius: '12px', 
+                          border: '1.5px solid var(--primary, #0ea5e9)', 
+                          background: 'var(--bg-body)', 
+                          color: 'var(--text-primary)', 
+                          outline: 'none', 
+                          boxSizing: 'border-box',
+                          fontSize: '0.95rem',
+                          boxShadow: '0 0 0 3px rgba(14, 165, 233, 0.15)'
+                        }}
                       />
                     )}
                   </div>

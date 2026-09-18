@@ -28,11 +28,7 @@ interface FilterPanelProps {
   onClose?: () => void;
 }
 
-const POPULAR_BRANDS = [
-  'Azimut', 'Beneteau', 'Bavaria', 'Yamaha', 'Sea Ray', 'Jeanneau', 
-  'Princess', 'Sunseeker', 'Lagoon', 'Fountaine Pajot', 'Zodiac', 
-  'Quicksilver', 'Bayliner', 'Mercury', 'Ferretti', 'Grand Soleil', 'Dufour'
-];
+import { POPULAR_BRANDS } from '@/lib/constants/brands';
 
 export default function FilterPanel({ filters, onChange, onClear, isOpen, onClose }: FilterPanelProps) {
   const t = useTranslations();
