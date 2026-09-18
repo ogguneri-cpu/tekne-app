@@ -14,6 +14,7 @@ const CATEGORIES = [
   { value: 'motoryat', label: 'Motoryat', icon: '🚤' },
   { value: 'yelkenli', label: 'Yelkenli', icon: '⛵' },
   { value: 'katamaran', label: 'Katamaran', icon: '🛥️' },
+  { value: 'trawler', label: 'Trawler', icon: '⛴️' },
   { value: 'surat_teknesi', label: 'Sürat Teknesi', icon: '💨' },
   { value: 'bot', label: 'Bot', icon: '🚣' },
   { value: 'jet_ski', label: 'Jet Ski', icon: '🏄' },

@@ -66,6 +66,7 @@ export const CATEGORIES = [
   { id: 'motoryat', label: 'Motoryat', icon: '🚤', value: 'motoryat' },
   { id: 'yelkenli', label: 'Yelkenli', icon: '⛵', value: 'yelkenli' },
   { id: 'katamaran', label: 'Katamaran', icon: '🛥️', value: 'katamaran' },
+  { id: 'trawler', label: 'Trawler', icon: '⛴️', value: 'trawler' },
   { id: 'surat_teknesi', label: 'Sürat Teknesi', icon: '💨', value: 'surat_teknesi' },
   { id: 'bot', label: 'Bot', icon: '🚣', value: 'bot' },
   { id: 'jet_ski', label: 'Jet Ski', icon: '🏄', value: 'jet_ski' },

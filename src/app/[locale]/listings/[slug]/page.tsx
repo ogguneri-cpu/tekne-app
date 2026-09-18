@@ -21,6 +21,7 @@ const CATEGORY_MAP: Record<string, { label: string; icon: string }> = {
   'motoryat': { label: 'Motoryat', icon: '🚤' },
   'yelkenli': { label: 'Yelkenli', icon: '⛵' },
   'katamaran': { label: 'Katamaran', icon: '🛥️' },
+  'trawler': { label: 'Trawler', icon: '⛴️' },
   'surat_teknesi': { label: 'Sürat Teknesi', icon: '💨' },
   'bot': { label: 'Bot', icon: '🚣' },
   'jet_ski': { label: 'Jet Ski', icon: '🏄' },
