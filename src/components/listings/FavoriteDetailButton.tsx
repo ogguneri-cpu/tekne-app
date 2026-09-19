@@ -8,9 +8,11 @@ import { createClient } from '@/lib/supabase/client';
 interface FavoriteDetailButtonProps {
   listingId: string;
   initialIsFavorited: boolean;
+  className?: string;
+  style?: React.CSSProperties;
 }
 
-export default function FavoriteDetailButton({ listingId, initialIsFavorited }: FavoriteDetailButtonProps) {
+export default function FavoriteDetailButton({ listingId, initialIsFavorited, className, style }: FavoriteDetailButtonProps) {
   const t = useTranslations();
   const locale = useLocale();
   const router = useRouter();
@@ -67,6 +69,7 @@ export default function FavoriteDetailButton({ listingId, initialIsFavorited }: 
       <button
         type="button"
         onClick={handleToggleFavorite}
+        className={className}
         style={{
           width: '100%',
           marginTop: '12px',
@@ -83,7 +86,8 @@ export default function FavoriteDetailButton({ listingId, initialIsFavorited }: 
           alignItems: 'center',
           justifyContent: 'center',
           gap: '8px',
-          boxShadow: '0 4px 12px rgba(0, 102, 255, 0.15)'
+          boxShadow: '0 4px 12px rgba(0, 102, 255, 0.15)',
+          ...style
         }}
       >
         ⭐ {isFavorited ? (locale === 'en' ? 'Favorited' : 'Favorilerimde') : (locale === 'en' ? 'Add to Favorites' : 'Favorilere Ekle')}

@@ -6,6 +6,7 @@ import { Link } from '@/i18n/routing';
 import DetailGallery from './DetailGallery';
 import BookingForm from './BookingForm';
 import FavoriteDetailButton from '@/components/listings/FavoriteDetailButton';
+import ShareListing from '@/components/listings/ShareListing';
 
 interface MobileDetailViewProps {
   listing: any;
@@ -50,13 +51,18 @@ export default function MobileDetailView({
 
   return (
     <div className="sahib-mobile-view" style={{ paddingBottom: '90px' }}>
-      {/* 1. Title at Top */}
-      <div style={{ padding: '14px 16px 10px', background: 'var(--bg-card)', borderBottom: '1px solid var(--border)' }}>
+      {/* 1. Title at Top & Share Bar */}
+      <div style={{ padding: '14px 16px 12px', background: 'var(--bg-card)', borderBottom: '1px solid var(--border)' }}>
         <h1 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: '1.35', margin: 0 }}>
           {displayTitle}
         </h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '6px' }}>
           <span>İlan No: #{String(listing.id).substring(0, 10)}</span>
+        </div>
+
+        {/* Share Bar */}
+        <div style={{ marginTop: '12px' }}>
+          <ShareListing title={displayTitle} variant="bar" />
         </div>
       </div>
 
@@ -170,7 +176,15 @@ export default function MobileDetailView({
             <div style={{ fontSize: '1.6rem', fontWeight: 900, color: 'var(--color-primary)', marginTop: '2px' }}>
               {priceText}
             </div>
-            <FavoriteDetailButton listingId={listing.id} initialIsFavorited={initialIsFavorited} />
+            {/* Action Buttons: Favorite & Share side by side */}
+            <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
+              <div style={{ flex: 1.15 }}>
+                <FavoriteDetailButton listingId={listing.id} initialIsFavorited={initialIsFavorited} style={{ marginTop: 0 }} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <ShareListing title={displayTitle} variant="button" style={{ height: '100%', padding: '14px 12px' }} />
+              </div>
+            </div>
           </div>
 
           {/* Rental Booking form if rent */}
