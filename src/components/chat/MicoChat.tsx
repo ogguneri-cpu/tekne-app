@@ -281,13 +281,13 @@ export default function MicoChat() {
           title="Miço — satiliktekne.com Akıllı Asistanı"
           style={{
             position: 'relative',
-            width: '62px',
-            height: '62px',
+            width: isOpen ? '54px' : '70px',
+            height: isOpen ? '54px' : '70px',
             borderRadius: '50%',
             padding: 0,
-            border: '3px solid #ffffff',
-            background: 'linear-gradient(135deg, #0066FF 0%, #004099 100%)',
-            boxShadow: '0 8px 24px rgba(0, 102, 255, 0.35), 0 4px 10px rgba(0, 0, 0, 0.1)',
+            border: isOpen ? '2px solid rgba(255,255,255,0.9)' : 'none',
+            background: isOpen ? 'linear-gradient(135deg, #0066FF 0%, #004099 100%)' : 'transparent',
+            boxShadow: isOpen ? '0 8px 24px rgba(0, 102, 255, 0.4)' : 'none',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
@@ -303,25 +303,25 @@ export default function MicoChat() {
           }}
         >
           {isOpen ? (
-            <span style={{ color: '#ffffff', fontSize: '1.5rem', fontWeight: 700, transform: 'rotate(-90deg)' }}>✕</span>
+            <span style={{ color: '#ffffff', fontSize: '1.4rem', fontWeight: 700, transform: 'rotate(-90deg)' }}>✕</span>
           ) : (
             <>
-              {/* Miço 3D Avatar Image */}
+              {/* Miço 3D Avatar Image with transparent drop-shadow */}
               <img
                 src="/mico.png"
                 alt="Miço"
                 style={{
                   width: '100%',
                   height: '100%',
-                  borderRadius: '50%',
-                  objectFit: 'cover'
+                  objectFit: 'contain',
+                  filter: 'drop-shadow(0 6px 14px rgba(0, 51, 153, 0.35))'
                 }}
               />
               {/* Online Green Pulsing Indicator */}
               <span
                 style={{
                   position: 'absolute',
-                  top: '2px',
+                  bottom: '2px',
                   right: '2px',
                   width: '14px',
                   height: '14px',
@@ -405,14 +405,14 @@ export default function MicoChat() {
                   borderRadius: '50%',
                   border: '2px solid rgba(255,255,255,0.8)',
                   overflow: 'hidden',
-                  background: '#ffffff',
+                  background: 'rgba(255,255,255,0.15)',
                   flexShrink: 0
                 }}
               >
                 <img
                   src="/mico.png"
                   alt="Miço"
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                 />
               </div>
               <div>
@@ -534,11 +534,12 @@ export default function MicoChat() {
                         borderRadius: '50%',
                         overflow: 'hidden',
                         flexShrink: 0,
-                        border: '1px solid rgba(0, 102, 255, 0.2)',
+                        border: '1.5px solid rgba(0, 102, 255, 0.2)',
+                        background: 'rgba(0, 102, 255, 0.05)',
                         marginTop: '2px'
                       }}
                     >
-                      <img src="/mico.png" alt="Miço" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <img src="/mico.png" alt="Miço" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                     </div>
                   )}
 
@@ -626,10 +627,11 @@ export default function MicoChat() {
                     borderRadius: '50%',
                     overflow: 'hidden',
                     flexShrink: 0,
-                    border: '1px solid rgba(0, 102, 255, 0.2)'
+                    border: '1.5px solid rgba(0, 102, 255, 0.2)',
+                    background: 'rgba(0, 102, 255, 0.05)'
                   }}
                 >
-                  <img src="/mico.png" alt="Miço" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img src="/mico.png" alt="Miço" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                 </div>
                 <div
                   style={{
