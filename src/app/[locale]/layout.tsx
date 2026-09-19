@@ -4,6 +4,7 @@ import { getMessages } from 'next-intl/server';
 import { routing } from '@/i18n/routing';
 import { notFound } from 'next/navigation';
 import '@/app/globals.css';
+import MicoChat from '@/components/chat/MicoChat';
 
 export async function generateMetadata({
   params
@@ -101,6 +102,7 @@ export default async function LocaleLayout({
       <body>
         <NextIntlClientProvider locale={locale} messages={messages}>
           {children}
+          <MicoChat />
         </NextIntlClientProvider>
       </body>
     </html>
